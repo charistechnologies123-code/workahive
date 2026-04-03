@@ -7,6 +7,109 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id                 Int           @id @default(autoincrement())
+  name               String
+  email              String        @unique
+  passwordHash       String
+  role               Role          @default(JOBSEEKER)
+  tokens             Int           @default(0)
+  emailVerified      Boolean       @default(false)
+  emailVerifiedAt    DateTime?     @db.Timestamp(6)
+  emailVerifyToken   String?       @unique
+  emailVerifyExpires DateTime?     @db.Timestamp(6)
+  resetTokenHash     String?
+  resetTokenExpires  DateTime?     @db.Timestamp(6)
+  createdAt          DateTime      @default(now()) @db.Timestamp(6)
+  updatedAt          DateTime      @default(now()) @updatedAt @db.Timestamp(6)
+  applications       Application[]
+  company            Company?      @relation("CompanyOwner")
+  jobs               Job[]         @relation("JobPostedBy")
+  savedJobs          SavedJob[]
+}
+
+model Company {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String?
+  industry    String?
+  location    String?
+  logoPath    String?
+  verified    Boolean @default(false)
+  website     String?
+  regNo       String?
+  proofNote   String?
+  facebook    String?
+  instagram   String?
+  linkedin    String?
+  x           String?
+  youtube     String?
+  ownerId     Int     @unique
+  owner       User    @relation("CompanyOwner", fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_company_owner")
+  jobs        Job[]
+}
+
+model Job {
+  id                Int           @id @default(autoincrement())
+  title             String
+  description       String
+  category          String?
+  type              String?
+  location          String?
+  workMode          WorkMode?
+  status            JobStatus     @default(OPEN)
+  isFeatured        Boolean       @default(false)
+  createdAt         DateTime      @default(now()) @db.Timestamp(6)
+  updatedAt         DateTime      @default(now()) @updatedAt @db.Timestamp(6)
+  applicationFields Json?         @db.Json
+  companyId         Int
+  postedById        Int
+  applications      Application[]
+  company           Company       @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_job_company")
+  postedBy          User          @relation("JobPostedBy", fields: [postedById], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_job_postedby")
+  savedByUsers      SavedJob[]
+}
+
+model Application {
+  id            Int               @id @default(autoincrement())
+  cvPath        String
+  coverLetter   String?
+  status        ApplicationStatus @default(APPLIED)
+  createdAt     DateTime          @default(now()) @db.Timestamp(6)
+  updatedAt     DateTime          @default(now()) @updatedAt @db.Timestamp(6)
+  customAnswers Json?             @db.Json
+  jobId         Int
+  applicantId   Int
+  applicant     User              @relation(fields: [applicantId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_application_applicant")
+  job           Job               @relation(fields: [jobId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_application_job")
+
+  @@unique([jobId, applicantId], map: "uq_job_applicant")
+}
+
+model SavedJob {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  userId    Int
+  jobId     Int
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_savedjob_job")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_savedjob_user")
+
+  @@unique([userId, jobId], map: "uq_user_job")
+}
+
+model AppSetting {
+  key      String @id
+  valueInt Int?
+}
+
+model LocationOption {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamp(6)
+}
+
 enum Role {
   ADMIN
   EMPLOYER
@@ -28,124 +131,4 @@ enum ApplicationStatus {
   APPLIED
   SHORTLISTED
   REJECTED
-}
-
-model User {
-  id                  Int            @id @default(autoincrement())
-  name                String
-  email               String         @unique
-  passwordHash        String
-  role                Role           @default(JOBSEEKER)
-  tokens              Int            @default(0)
-
-  emailVerified       Boolean        @default(false)
-  emailVerifiedAt     DateTime?
-  emailVerifyToken    String?        @unique
-  emailVerifyExpires  DateTime?
-
-  resetTokenHash      String?
-  resetTokenExpires   DateTime?
-
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
-
-  jobs                Job[]          @relation("JobPostedBy")
-  applications        Application[]
-  savedJobs           SavedJob[]
-  company             Company?       @relation("CompanyOwner")
-}
-
-model Company {
-  id           Int      @id @default(autoincrement())
-  name         String
-  description  String?
-  industry     String?
-  location     String?
-  logoPath     String?
-  verified     Boolean  @default(false)
-
-  website      String?
-  regNo        String?
-  proofNote    String?
-
-  facebook     String?
-  instagram    String?
-  linkedin     String?
-  x            String?
-  youtube      String?
-
-  owner        User     @relation("CompanyOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  ownerId      Int      @unique
-
-  jobs         Job[]
-}
-
-model Job {
-  id                Int            @id @default(autoincrement())
-  title             String
-  description       String
-  category          String?
-  type              String?
-  location          String?
-  workMode          WorkMode?
-  status            JobStatus      @default(OPEN)
-  isFeatured        Boolean        @default(false)
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-
-  applicationFields Json?
-
-  company           Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  companyId         Int
-
-  postedBy          User           @relation("JobPostedBy", fields: [postedById], references: [id], onDelete: Cascade)
-  postedById        Int
-
-  applications      Application[]
-  savedByUsers      SavedJob[]
-}
-
-model Application {
-  id            Int               @id @default(autoincrement())
-  cvPath        String
-  coverLetter   String?
-  status        ApplicationStatus @default(APPLIED)
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @default(now()) @updatedAt
-
-  customAnswers Json?
-
-  jobId         Int
-  job           Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
-
-  applicantId   Int
-  applicant     User              @relation(fields: [applicantId], references: [id], onDelete: Cascade)
-
-  @@unique([jobId, applicantId])
-}
-
-model SavedJob {
-  id         Int      @id @default(autoincrement())
-  createdAt  DateTime @default(now())
-
-  userId     Int
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  jobId      Int
-  job        Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, jobId])
-}
-
-model AppSetting {
-  key      String @id
-  valueInt Int
-}
-
-model LocationOption {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
