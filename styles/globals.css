@@ -570,3 +570,242 @@ form {
   border-radius: 999px;
   font-weight: 500;
 }
+
+
+
+
+/* Support Page Styling */
+/* Support Page Card */
+.support-card {
+  background: #ffffff;
+  max-width: 640px;
+  width: 100%;
+  padding: 32px;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+  text-align: center;
+}
+
+/* Section spacing */
+.support-section {
+  margin-top: 20px;
+}
+
+/* WhatsApp Button */
+.whatsapp-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  background: #25D366;
+  color: white;
+  padding: 14px;
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.whatsapp-btn:hover {
+  background: #1ebe5d;
+}
+
+/* Email Box */
+.email-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #f9fafb;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #eee;
+  font-weight: 500;
+}
+
+/* Token Plans */
+.token-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.token-card {
+  border: 1px solid #e5e7eb;
+  padding: 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.token-card:hover {
+  border-color: #6B00FF;
+}
+
+.token-card.active {
+  border-color: #6B00FF;
+  background: #f5f3ff;
+}
+
+/* CTA Button */
+.primary-btn {
+  background: #6B00FF;
+  color: white;
+  padding: 14px;
+  border-radius: 12px;
+  width: 100%;
+  font-weight: 600;
+}
+
+.primary-btn:hover {
+  background: #5800d6;
+}
+
+/* ===== Navbar Updates ===== */
+.nav-links a {
+  padding: 8px 12px; /* slightly more padding for visual balance with Tokens link */
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  color: var(--text);
+  transition: all 0.2s ease;
+  white-space: nowrap; /* prevents text wrap on smaller screens */
+}
+
+.nav-links a:hover {
+  background: #f3f4f6;
+}
+
+.nav-links a.active {
+  background: var(--primary);
+  color: #fff;
+}
+
+.support-link {
+  margin-right: 16px;
+  font-weight: 500;
+  color: #555;
+  border-left: 1px solid #e5e7eb;
+  padding-left: 16px;
+  transition: color 0.2s ease;
+}
+
+.support-link:hover {
+  color: #6B00FF;
+}
+
+/* Admin Tokens Link Styling */
+.nav-links a.tokens-link {
+  color: var(--text);
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.nav-links a.tokens-link.active {
+  background: #6B00FF; /* primary purple for admin link */
+  color: #fff;
+}
+
+/* ===== Navbar Layout Flex Support ===== */
+.nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ===== Role Badge Updates ===== */
+.role-pill {
+  font-size: 12px;
+  background: #f3f4f6;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ===== Token Plans Styling Enhancements ===== */
+.token-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.token-card {
+  border: 1px solid #e5e7eb;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.token-card:hover {
+  border-color: #6B00FF;
+  background: #f5f3ff;
+}
+
+.token-card.active {
+  border-color: #6B00FF;
+  background: #f5f3ff;
+}
+
+/* Token Card Inner Text */
+.token-card h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.token-card p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* ===== Buttons for Token Page ===== */
+.primary-btn {
+  background: #6B00FF;
+  color: #fff;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  width: 100%;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.primary-btn:hover {
+  background: #5800d6;
+}
+
+/* ===== Responsive Navbar Fix ===== */
+@media (max-width: 700px) {
+  .nav-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .nav-links {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .nav-actions {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 10px;
+  }
+}

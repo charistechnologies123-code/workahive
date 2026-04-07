@@ -22,6 +22,7 @@ export default function Navbar() {
 
   const isAdminDashboard = router.pathname.startsWith("/admin/dashboard");
   const isAdminProfile = router.pathname === "/admin/profile";
+  const isAdminTokens = router.pathname === "/admin/token-plans"; // new
 
   const isJobseekerProfile = router.pathname === "/jobseeker/profile";
   const isJobseekerJobs = router.pathname === "/jobseeker/jobs";
@@ -75,6 +76,9 @@ export default function Navbar() {
             <>
               <Link href="/admin/dashboard" className={isAdminDashboard ? "active" : ""}>
                 Dashboard
+              </Link>
+              <Link href="/admin/token-plans" className={isAdminTokens ? "active" : ""}>
+                Tokens
               </Link>
               <Link href="/admin/profile" className={isAdminProfile ? "active" : ""}>
                 Profile

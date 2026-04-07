@@ -113,6 +113,14 @@ model LocationOption {
   updatedAt DateTime @default(now()) @updatedAt @db.Timestamp(6)
 }
 
+model TokenPlan {
+  id        String   @id @default(cuid())
+  tokens    Int
+  price     Int
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
 enum Role {
   ADMIN
   EMPLOYER
