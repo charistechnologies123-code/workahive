@@ -29,7 +29,9 @@ export default function Navbar() {
   return (
     <header className="nav">
       <div className="nav-inner">
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        
+        {/* LEFT: Logo */}
+        <Link href="/" className="logo">
           <Image
             src="/workahive-logo.png"
             alt="WorkaHive"
@@ -38,6 +40,7 @@ export default function Navbar() {
           />
         </Link>
 
+        {/* CENTER: Navigation */}
         <nav className="nav-links">
           <Link href="/" className={router.pathname === "/" ? "active" : ""}>
             Jobs
@@ -45,24 +48,13 @@ export default function Navbar() {
 
           {!loading && user?.role === "EMPLOYER" && (
             <>
-              <Link
-                href="/employer/dashboard"
-                className={isEmployerDashboard ? "active" : ""}
-              >
+              <Link href="/employer/dashboard" className={isEmployerDashboard ? "active" : ""}>
                 Dashboard
               </Link>
-
-              <Link
-                href="/employer/jobs"
-                className={isEmployerJobs ? "active" : ""}
-              >
+              <Link href="/employer/jobs" className={isEmployerJobs ? "active" : ""}>
                 My Jobs
               </Link>
-
-              <Link
-                href="/employer/profile"
-                className={isEmployerProfile ? "active" : ""}
-              >
+              <Link href="/employer/profile" className={isEmployerProfile ? "active" : ""}>
                 Profile
               </Link>
             </>
@@ -70,17 +62,10 @@ export default function Navbar() {
 
           {!loading && user?.role === "JOBSEEKER" && (
             <>
-              <Link
-                href="/jobseeker/jobs"
-                className={isJobseekerJobs ? "active" : ""}
-              >
+              <Link href="/jobseeker/jobs" className={isJobseekerJobs ? "active" : ""}>
                 My Jobs
               </Link>
-
-              <Link
-                href="/jobseeker/profile"
-                className={isJobseekerProfile ? "active" : ""}
-              >
+              <Link href="/jobseeker/profile" className={isJobseekerProfile ? "active" : ""}>
                 Profile
               </Link>
             </>
@@ -88,39 +73,30 @@ export default function Navbar() {
 
           {!loading && user?.role === "ADMIN" && (
             <>
-              <Link
-                href="/admin/dashboard"
-                className={isAdminDashboard ? "active" : ""}
-              >
+              <Link href="/admin/dashboard" className={isAdminDashboard ? "active" : ""}>
                 Dashboard
               </Link>
-
-              <Link
-                href="/admin/profile"
-                className={isAdminProfile ? "active" : ""}
-              >
+              <Link href="/admin/profile" className={isAdminProfile ? "active" : ""}>
                 Profile
               </Link>
             </>
           )}
+        </nav>
+
+        {/* RIGHT: Actions */}
+        <div className="nav-actions">
+
+          {/* Support (separated & styled) */}
+          <Link href="/support" className="support-link">
+            Support
+          </Link>
 
           {!loading && !user && (
             <>
-              <Link
-                href="/login"
-                className={router.pathname === "/login" ? "active" : ""}
-              >
+              <Link href="/login" className="btn-soft">
                 Login
               </Link>
-
-              <Link
-                href="/register"
-                className={
-                  router.pathname === "/register"
-                    ? "btn-primary active"
-                    : "btn-soft"
-                }
-              >
+              <Link href="/register" className="btn-primary">
                 Register
               </Link>
             </>
@@ -134,7 +110,7 @@ export default function Navbar() {
               </button>
             </>
           )}
-        </nav>
+        </div>
       </div>
     </header>
   );

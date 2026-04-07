@@ -1,6 +1,8 @@
+// pages/api/auth/register.js
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import prisma from "../../../lib/prisma";
+import { sendWelcomeEmail, sendVerificationEmail } from "../../../lib/email";
 
 const strongPasswordRegex =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
@@ -86,6 +88,18 @@ export default async function handler(req, res) {
         emailVerified: true,
       },
     });
+
+    // --- SEND EMAIL ---
+    try {
+      if (finalRole === "JOBSEEKER") {
+        const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verify-email?token=${emailVerifyToken}`;
+        await sendVerificationEmail(normalizedEmail, trimmedName, verifyUrl);
+      } else {
+        await sendWelcomeEmail(normalizedEmail, trimmedName);
+      }
+    } catch (emailError) {
+      console.error("Email sending failed:", emailError);
+    }
 
     return res.status(201).json({
       ...user,

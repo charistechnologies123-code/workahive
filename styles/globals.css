@@ -529,3 +529,44 @@ form {
 .tiptap-editor a {
   text-decoration: underline;
 }
+
+
+
+/* New Navbar Styling */
+.support-link {
+  margin-right: 16px;
+  font-weight: 500;
+  color: #555;
+  border-left: 1px solid #e5e7eb;
+  padding-left: 16px;
+}
+
+.support-link:hover {
+  color: #6B00FF;
+}
+
+
+.nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-links {
+  display: flex;
+  gap: 20px;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.role-pill {
+  font-size: 12px;
+  background: #f3f4f6;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 500;
+}

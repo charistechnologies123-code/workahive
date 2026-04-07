@@ -27,6 +27,8 @@ model User {
   company            Company?      @relation("CompanyOwner")
   jobs               Job[]         @relation("JobPostedBy")
   savedJobs          SavedJob[]
+  otpCode            String?   // new field for OTP
+  otpExpires         DateTime? // optional: expiration
 }
 
 model Company {
