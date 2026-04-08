@@ -343,7 +343,7 @@ export default function Navbar() {
           </Link>
 
           {/* Video Guides */}
-          <a href="https://youtu.be/ud9_Dj894eU?si=ONs8fB4HlkPFSXpP" target="_blank" rel="noopener noreferrer" className="nav-link">
+          <a href="https://youtube.com/playlist?list=PLIHA5XP5J_xPXI8O1vWi8I1v1GGPVqVuD&si=HrsHjnAqjPtxei-O" target="_blank" rel="noopener noreferrer" className="nav-link">
             Video Guides
           </a>
 
