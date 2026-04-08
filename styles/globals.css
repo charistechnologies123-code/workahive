@@ -1619,6 +1619,30 @@ form {
     flex-wrap: wrap;
     gap: 8px;
   }
+  
+  /* Hide logout button on mobile since sidebar handles it */
+  .desktop-logout {
+    display: none;
+  }
+}
+
+/* Desktop logout button styling */
+.desktop-logout {
+  background: var(--primary-soft);
+  color: var(--primary) !important;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  font-size: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.desktop-logout:hover {
+  background: #dbeafe;
 }
 
 /* ===== Notifications ===== */

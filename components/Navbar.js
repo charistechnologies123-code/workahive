@@ -347,6 +347,13 @@ export default function Navbar() {
             Video Guides
           </a>
 
+          {/* Logout (Desktop only) */}
+          {!loading && user && (
+            <button onClick={logout} className="nav-link desktop-logout">
+              Logout
+            </button>
+          )}
+
           {!loading && !user && (
             <>
               <Link href="/login" className="btn-soft">
