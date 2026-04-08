@@ -2,7 +2,6 @@
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import prisma from "../../../lib/prisma";
-import { sendWelcomeEmail, sendVerificationEmail } from "../../../lib/email";
 import { createNotification } from "../../../lib/notifications";
 
 const strongPasswordRegex =
@@ -56,17 +55,10 @@ export default async function handler(req, res) {
     const safeFreeTokens =
       Number.isFinite(freeTokens) && freeTokens >= 0 ? freeTokens : 0;
 
-    let emailVerified = true;
-    let emailVerifiedAt = new Date();
-    let emailVerifyToken = null;
-    let emailVerifyExpires = null;
-
-    if (finalRole === "JOBSEEKER") {
-      emailVerified = false;
-      emailVerifiedAt = null;
-      emailVerifyToken = crypto.randomBytes(32).toString("hex");
-      emailVerifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-    }
+    const emailVerified = true;
+    const emailVerifiedAt = new Date();
+    const emailVerifyToken = null;
+    const emailVerifyExpires = null;
 
     const user = await prisma.user.create({
       data: {
@@ -97,17 +89,8 @@ export default async function handler(req, res) {
       console.error("Notification creation failed:", notificationError);
     }
 
-    // --- SEND EMAIL ---
-    try {
-      if (finalRole === "JOBSEEKER") {
-        const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verify-email?token=${emailVerifyToken}`;
-        await sendVerificationEmail(normalizedEmail, trimmedName, verifyUrl);
-      } else {
-        await sendWelcomeEmail(normalizedEmail, trimmedName);
-      }
-    } catch (emailError) {
-      console.error("Email sending failed:", emailError);
-    }
+    // --- EMAILS DISABLED ---
+    // Email sending is disabled in this deployment. No email will be sent here.
 
     return res.status(201).json({
       ...user,
