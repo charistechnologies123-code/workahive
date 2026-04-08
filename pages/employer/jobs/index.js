@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { useAuth } from "../../../context/AuthContext";
 
 function formatStatus(status) {
   const s = String(status || "").toUpperCase();
@@ -186,7 +187,7 @@ export default function EmployerJobsPage() {
               return (
                 <div
                   key={job.id}
-                  className="job-item"
+                  className="job-card employer-my-jobs-card"
                   style={{
                     display: "grid",
                     gap: 12,

@@ -51,9 +51,9 @@ function getStatusMeta(status) {
       label: "Applied",
       className: "status-pill",
       style: {
-        background: "rgba(249,115,22,0.14)",
-        color: "#fdba74",
-        border: "1px solid rgba(249,115,22,0.35)",
+        background: "rgba(59,130,246,0.14)",
+        color: "#60a5fa",
+        border: "1px solid rgba(59,130,246,0.35)",
       },
     };
   }
@@ -73,6 +73,7 @@ export default function JobSeekerMyJobsPage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState("ALL");
+  const [busyJobId, setBusyJobId] = useState(null);
 
   const counts = useMemo(() => {
     const summary = {
@@ -126,6 +127,32 @@ export default function JobSeekerMyJobsPage() {
       setItems([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const unsaveJob = async (jobId) => {
+    setBusyJobId(jobId);
+
+    try {
+      const res = await fetch("/api/jobs/toggle-save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ jobId }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data?.error || "Failed to unsave job");
+        return;
+      }
+
+      toast.success("Job unsaved successfully");
+      loadJobs(); // Refresh the list
+    } catch {
+      toast.error("Failed to unsave job");
+    } finally {
+      setBusyJobId(null);
     }
   };
 
@@ -187,11 +214,11 @@ export default function JobSeekerMyJobsPage() {
         <div className="card-head">
           <h2>
             {activeFilter === "ALL"
-              ? "All Interacted Jobs"
+              ? "My Jobs"
               : `${activeFilter.charAt(0) + activeFilter.slice(1).toLowerCase()} Jobs`}
           </h2>
           <p className="muted">
-            Jobs are shown by their latest interaction status.
+            When you save or apply for a job, it will appear here so you can easily keep track of it.
           </p>
         </div>
 
@@ -199,9 +226,9 @@ export default function JobSeekerMyJobsPage() {
           <p className="muted">Loading jobs…</p>
         ) : filteredItems.length === 0 ? (
           <div>
-            <p className="muted">No jobs found for this filter.</p>
+            <p className="muted">No jobs found.</p>
             <div style={{ marginTop: 12 }}>
-              <Link href="/jobs" className="btn-primary">
+              <Link href="/" className="btn-primary">
                 Browse Jobs
               </Link>
             </div>
@@ -214,7 +241,7 @@ export default function JobSeekerMyJobsPage() {
               return (
                 <div
                   key={item.jobId}
-                  className="card"
+                  className="job-card jobseeker-my-jobs-card"
                   style={{
                     margin: 0,
                     border: "1px solid rgba(255,255,255,0.08)",
@@ -251,15 +278,15 @@ export default function JobSeekerMyJobsPage() {
                         background: "rgba(255,255,255,0.03)",
                       }}
                     >
-                      <p className="muted small" style={{ marginTop: 0 }}>
-                        Job Details
-                      </p>
-                      <p style={{ margin: 0 }}>
-                        <b>Work Mode:</b> {formatWorkMode(item.workMode)}
-                      </p>
-                      <p style={{ marginTop: 6, marginBottom: 0 }}>
-                        <b>Status Updated:</b> {formatDate(item.interactedAt)}
-                      </p>
+                      <h3 className="job-section-heading">Job Details</h3>
+                      <div className="job-details-meta">
+                        <p style={{ margin: 0 }}>
+                          <b>Work Mode:</b> {formatWorkMode(item.workMode)}
+                        </p>
+                        <p style={{ margin: 0 }}>
+                          <b>Status Updated:</b> {formatDate(item.interactedAt)}
+                        </p>
+                      </div>
                     </div>
 
                     {item.description && (
@@ -271,12 +298,25 @@ export default function JobSeekerMyJobsPage() {
                           background: "rgba(255,255,255,0.03)",
                         }}
                       >
-                        <p className="muted small" style={{ marginTop: 0 }}>
-                          Description
-                        </p>
-                        <p style={{ marginBottom: 0, whiteSpace: "pre-wrap" }}>
-                          {item.description}
-                        </p>
+                        <h3 className="job-description-heading">Description</h3>
+                        <div
+                          className="job-richtext"
+                          style={{ marginBottom: 0 }}
+                          dangerouslySetInnerHTML={{ __html: item.description }}
+                        />
+                      </div>
+                    )}
+
+                    {item.interactionStatus === "SAVED" && (
+                      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
+                        <button
+                          type="button"
+                          className="btn-soft"
+                          onClick={() => unsaveJob(item.jobId)}
+                          disabled={busyJobId === item.jobId}
+                        >
+                          {busyJobId === item.jobId ? "Unsaving…" : "Unsave Job"}
+                        </button>
                       </div>
                     )}
 

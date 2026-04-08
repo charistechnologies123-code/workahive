@@ -61,23 +61,34 @@ export default function AdminJobModerate() {
       <div className="card">
         <div className="card-head">
           <h1 style={{ marginBottom: 6 }}>{job.title}</h1>
-          <p className="muted small">{job.company?.name || "—"} • {job.location || "—"}</p>
-           <p className="muted small">
-    Applicants: <b>{job.applicantsCount}</b>
-  </p>
+        </div>
 
-          <div style={{ marginTop: 10 }}>
+        <div style={{ marginTop: 8 }}>
+          <h3 className="job-section-heading">Job Details</h3>
+          <div className="job-details-meta">
+            <p className="muted small" style={{ margin: 0 }}>
+              {job.company?.name || "—"} • {job.location || "—"}
+            </p>
+            <p className="muted small" style={{ margin: 0 }}>
+              Applicants: <b>{job.applicantsCount}</b>
+            </p>
+          </div>
+
+          <div style={{ marginTop: 12 }}>
             <span className={`status-pill status-${String(job.status || "").toLowerCase()}`}>
               {job.status}
             </span>
           </div>
         </div>
-<h3> Description: </h3> 
-        {success && <div className="alert alert-success">{success}</div>}
 
-        <div style={{ whiteSpace: "pre-wrap", marginTop: 12 }}>{job.description}</div>
+        <div style={{ marginTop: 18 }}>
+          <h3 className="job-description-heading">Description</h3>
+          <div style={{ whiteSpace: "pre-wrap", marginTop: 8 }}>{job.description}</div>
+        </div>
 
-        <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
+        {success && <div className="alert alert-success" style={{ marginTop: 16 }}>{success}</div>}
+
+        <div style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "wrap" }}>
           <button className="btn-primary" onClick={() => setStatus("APPROVED")}>Approve</button>
           <button className="btn-outline" onClick={() => setStatus("REJECTED")}>Reject</button>
           <button className="btn-outline" onClick={() => setStatus("PENDING")}>Back to Pending</button>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import toast from "react-hot-toast";
 
 const strongPasswordRegex =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
@@ -57,20 +58,16 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const [error, setError] = useState("");
-  const [info, setInfo] = useState("");
   const router = useRouter();
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setInfo("");
 
     // ✅ strong password check
     if (!strongPasswordRegex.test(form.password)) {
-      setError(
+      toast.error(
         "Password must be at least 8 characters and include uppercase, lowercase, number, and special character."
       );
       return;
@@ -78,7 +75,7 @@ export default function Register() {
 
     // ✅ confirm password check
     if (form.password !== form.confirmPassword) {
-      setError("Passwords do not match. Please confirm your password.");
+      toast.error("Passwords do not match. Please confirm your password.");
       return;
     }
 
@@ -98,17 +95,16 @@ export default function Register() {
     const data = await res.json();
 
     if (!res.ok) {
-      setError(data.error || "Registration failed");
+      toast.error(data.error || "Registration failed");
       return;
     }
 
-setInfo("Registration successful. Redirecting to login…");
+    toast.success("Registration successful. Redirecting to login…");
 
-// redirect to login after a short delay
-setTimeout(() => {
-  router.push("/login");
-}, 1200);
-
+    // redirect to login after a short delay
+    setTimeout(() => {
+      router.push("/login");
+    }, 1200);
   };
 
   return (
@@ -211,9 +207,6 @@ setTimeout(() => {
           <button className="btn-primary" type="submit">
             Create account
           </button>
-
-          {error && <div className="alert alert-error">{error}</div>}
-          {info && <div className="alert alert-success">{info}</div>}
 
           <p className="small" style={{ marginTop: 12 }}>
             Already have an account?{" "}

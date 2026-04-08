@@ -1,5 +1,6 @@
 import prisma from "../../../lib/prisma";
 import { requireAuth } from "../../../lib/auth";
+import { createNotification } from "../../../lib/notifications";
 
 const normalize = (v) => {
   if (typeof v !== "string") return null;
@@ -109,6 +110,29 @@ export default requireAuth(
           // verified stays false by default; admins verify manually
         },
       });
+
+      // --- CREATE NOTIFICATIONS ---
+      try {
+        // Notify employer about company creation
+        await createNotification(user.id, "COMPANY_CREATED", {
+          companyName: name,
+        });
+
+        // Notify admins about company awaiting verification
+        const admins = await prisma.user.findMany({
+          where: { role: "ADMIN" },
+          select: { id: true },
+        });
+
+        for (const admin of admins) {
+          await createNotification(admin.id, "COMPANY_AWAITING_VERIFICATION", {
+            companyName: name,
+            ownerName: user.name,
+          });
+        }
+      } catch (notificationError) {
+        console.error("Notification creation failed:", notificationError);
+      }
 
       return res.status(201).json({ company });
     } catch (e) {

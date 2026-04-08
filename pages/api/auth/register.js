@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import prisma from "../../../lib/prisma";
 import { sendWelcomeEmail, sendVerificationEmail } from "../../../lib/email";
+import { createNotification } from "../../../lib/notifications";
 
 const strongPasswordRegex =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
@@ -88,6 +89,13 @@ export default async function handler(req, res) {
         emailVerified: true,
       },
     });
+
+    // --- CREATE WELCOME NOTIFICATION ---
+    try {
+      await createNotification(user.id, "WELCOME", { userName: user.name, role: user.role });
+    } catch (notificationError) {
+      console.error("Notification creation failed:", notificationError);
+    }
 
     // --- SEND EMAIL ---
     try {

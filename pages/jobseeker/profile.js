@@ -184,6 +184,7 @@ export default function JobSeekerProfilePage() {
         )}
       </div>
 
+
       <div className="card">
         <div className="card-head">
           <h2>Update Password</h2>

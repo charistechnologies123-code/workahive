@@ -3,9 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")      // pooler URL (pgbouncer)
-  directUrl = env("DIRECT_URL")        // direct URL (port 5432, no pgbouncer)
+  provider = "postgresql"
 }
 
 model User {
@@ -27,8 +25,7 @@ model User {
   company            Company?      @relation("CompanyOwner")
   jobs               Job[]         @relation("JobPostedBy")
   savedJobs          SavedJob[]
-  otpCode            String?   // new field for OTP
-  otpExpires         DateTime? // optional: expiration
+  notifications      Notification[]
 }
 
 model Company {
@@ -119,6 +116,22 @@ model TokenPlan {
   price     Int
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  type      String   // 'WELCOME', 'COMPANY_CREATED', 'COMPANY_VERIFIED', 'NEW_APPLICATION', 'TOKENS_CREDITED', 'APPLICATION_SHORTLISTED', 'APPLICATION_REJECTED', 'COMPANY_AWAITING_VERIFICATION'
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  data      Json?    @db.Json // Store additional data like jobId, applicationId, etc
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamp(6)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId])
+  @@index([read])
 }
 
 enum Role {

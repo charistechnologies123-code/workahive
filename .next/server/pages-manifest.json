@@ -2,8 +2,14 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/support": "pages/support.js",
   "/": "pages/index.js",
-  "/login": "pages/login.js",
-  "/api/auth/login": "pages/api/auth/login.js"
+  "/api/jobs": "pages/api/jobs.js",
+  "/api/auth/me": "pages/api/auth/me.js",
+  "/api/notifications": "pages/api/notifications.js",
+  "/support": "pages/support.js",
+  "/api/token-plans": "pages/api/token-plans.js",
+  "/employer/dashboard": "pages/employer/dashboard.js",
+  "/api/company/me": "pages/api/company/me.js",
+  "/api/locations": "pages/api/locations.js",
+  "/employer/profile": "pages/employer/profile.js"
 }

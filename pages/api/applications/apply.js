@@ -1,5 +1,6 @@
 import prisma from "../../../lib/prisma";
 import { requireAuth } from "../../../lib/auth";
+import { createNotification } from "../../../lib/notifications";
 import multer from "multer";
 import fs from "fs";
 import path from "path";
@@ -98,9 +99,26 @@ async function handler(req, res) {
       select: {
         id: true,
         status: true,
+        title: true,
         applicationFields: true,
+        company: {
+          select: {
+            ownerId: true,
+          },
+        },
       },
     });
+
+    const applicantRecord = await prisma.user.findUnique({
+      where: { id: applicant.id },
+      select: { id: true },
+    });
+
+    if (!applicantRecord) {
+      return res.status(403).json({
+        error: "User not found.",
+      });
+    }
 
     if (!job || job.status !== "OPEN") {
       return res.status(400).json({ error: "Job not open for applications" });
@@ -148,6 +166,15 @@ async function handler(req, res) {
         status: "APPLIED",
       },
     });
+
+    // --- CREATE NOTIFICATION FOR EMPLOYER ---
+    try {
+      await createNotification(job.company.ownerId, "NEW_APPLICATION", {
+        jobTitle: job.title,
+      });
+    } catch (notificationError) {
+      console.error("Notification creation failed:", notificationError);
+    }
 
     return res.status(201).json({
       message: "Application sent successfully",

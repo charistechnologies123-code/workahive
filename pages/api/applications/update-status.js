@@ -1,5 +1,6 @@
 import prisma from "../../../lib/prisma";
 import jwt from "jsonwebtoken";
+import { createNotification } from "../../../lib/notifications";
 
 const JWT_SECRET = process.env.JWT_SECRET || "secret";
 
@@ -41,7 +42,8 @@ export default async function handler(req, res) {
     const application = await prisma.application.findUnique({
       where: { id: applicationId },
       include: {
-        job: { select: { postedById: true } },
+        job: { select: { postedById: true, title: true } },
+        applicant: { select: { id: true, name: true } },
       },
     });
 
@@ -57,6 +59,21 @@ export default async function handler(req, res) {
       where: { id: applicationId },
       data: { status },
     });
+
+    // --- CREATE NOTIFICATION FOR APPLICANT ---
+    try {
+      if (status === "SHORTLISTED") {
+        await createNotification(application.applicant.id, "APPLICATION_SHORTLISTED", {
+          jobTitle: application.job.title,
+        });
+      } else if (status === "REJECTED") {
+        await createNotification(application.applicant.id, "APPLICATION_REJECTED", {
+          jobTitle: application.job.title,
+        });
+      }
+    } catch (notificationError) {
+      console.error("Notification creation failed:", notificationError);
+    }
 
     return res.status(200).json({ application: updated });
   } catch (err) {

@@ -1,5 +1,6 @@
 import prisma from "../../../../lib/prisma";
 import { getUserFromRequest } from "../../../../lib/auth";
+import { createNotification } from "../../../../lib/notifications";
 
 export default async function handler(req, res) {
   const me = getUserFromRequest(req);
@@ -33,9 +34,18 @@ export default async function handler(req, res) {
       const company = await prisma.company.update({
         where: { id },
         data: { verified },
+        include: { owner: { select: { id: true, name: true } } },
       });
+
+      if (verified && company.owner?.id) {
+        await createNotification(company.owner.id, "COMPANY_VERIFIED", {
+          companyName: company.name,
+        });
+      }
+
       return res.status(200).json({ company });
-    } catch {
+    } catch (error) {
+      console.error(error);
       return res.status(500).json({ error: "Failed to update company" });
     }
   }

@@ -339,7 +339,7 @@ export default function EmployerJobManage() {
             ) : (
               <button
                 type="button"
-                className="btn-outline"
+                className="btn-soft"
                 onClick={() => updateStatus("OPEN")}
                 disabled={statusBusy}
               >
@@ -707,7 +707,7 @@ export default function EmployerJobManage() {
               </button>
             ) : (
               <button
-                className="btn-outline"
+                className="btn-soft"
                 type="button"
                 onClick={() => updateStatus("OPEN")}
                 disabled={statusBusy}

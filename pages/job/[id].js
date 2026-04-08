@@ -214,7 +214,9 @@ export default function JobDetail() {
       const data = await res.json();
 
       if (!res.ok) {
-        setPageError(data.error || "Application failed");
+        const errorText = data.error || "Application failed";
+        toast.error(errorText);
+        setPageError(errorText);
         return;
       }
 
@@ -230,7 +232,9 @@ export default function JobDetail() {
       });
       setCustomAnswers(resetAnswers);
     } catch (e) {
-      setPageError("Application failed");
+      const errorText = e?.message || "Application failed";
+      toast.error(errorText);
+      setPageError(errorText);
     } finally {
       setSubmitting(false);
     }
@@ -393,33 +397,37 @@ export default function JobDetail() {
       <div className="card">
         <div className="card-head">
           <h1 style={{ marginBottom: 6 }}>{job.title}</h1>
-          <p className="muted small">
-            {job.company?.name || "—"} • {job.location || "—"} • {job.type || "—"} • {job.category || "—"}
-          </p>
+        </div>
 
-          <p className="muted small">
-            Applicants: <b>{job.applicantsCount}</b>
-          </p>
+        <div style={{ marginTop: 8 }}>
+          <h3 className="job-section-heading">Job Details</h3>
+          <div className="job-details-meta">
+            <p className="muted small" style={{ margin: 0 }}>
+              {job.company?.name || "—"} • {job.location || "—"} • {job.type || "—"} • {job.category || "—"}
+            </p>
+            <p className="muted small" style={{ margin: 0 }}>
+              Applicants: <b>{job.applicantsCount}</b>
+            </p>
+          </div>
 
-          <div style={{ marginTop: 10 }}>
+          <div style={{ marginTop: 12 }}>
             <span className={`status-pill status-${String(job.status || "").toLowerCase()}`}>
               {job.status}
             </span>
           </div>
         </div>
 
-      {/<[a-z][\s\S]*>/i.test(job.description || "") ? (
-  <div
-    className="job-richtext"
-    style={{ marginTop: 12 }}
-    dangerouslySetInnerHTML={{ __html: job.description }}
-  />
-) : (
-  <div style={{ marginTop: 12, whiteSpace: "pre-line" }}>
-    {job.description}
-  </div>
-)}
-
+        <div style={{ marginTop: 18 }}>
+          <h3 className="job-description-heading">Description</h3>
+          {/<[a-z][\s\S]*>/i.test(job.description || "") ? (
+            <div
+              className="job-richtext"
+              dangerouslySetInnerHTML={{ __html: job.description }}
+            />
+          ) : (
+            <div style={{ whiteSpace: "pre-line" }}>{job.description}</div>
+          )}
+        </div>
       </div>
 
       <div className="card">

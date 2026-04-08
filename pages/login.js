@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import toast from "react-hot-toast";
 
 function EyeIcon() {
   return (
@@ -44,7 +45,6 @@ function EyeOffIcon() {
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
-  const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
@@ -52,7 +52,6 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
 
     const res = await fetch("/api/auth/login", {
       method: "POST",
@@ -64,9 +63,12 @@ export default function Login() {
     const data = await res.json();
 
     if (!res.ok) {
-      setError(data.error || "Login failed");
+      const errorMsg = data.error || "Login failed";
+      toast.error(errorMsg);
       return;
     }
+
+    toast.success("Login successful!");
 
     // 🔔 notify navbar/auth context that login just happened
     window.dispatchEvent(new Event("auth-changed"));
@@ -142,8 +144,6 @@ export default function Login() {
           <button className="btn-primary" type="submit">
             Login
           </button>
-
-          {error && <div className="alert alert-error">{error}</div>}
 
           <p className="small" style={{ marginTop: 12 }}>
             Don&apos;t have an account?{" "}

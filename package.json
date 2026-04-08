@@ -3,12 +3,13 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "prisma generate && next dev",
     "build": "prisma generate && next build",
     "start": "next start"
   },
   "dependencies": {
-    "@prisma/client": "^5.0.0",
+    "@prisma/adapter-pg": "^7.7.0",
+    "@prisma/client": "^7.7.0",
     "@tiptap/extension-link": "^3.20.4",
     "@tiptap/extension-text-align": "^3.20.4",
     "@tiptap/extension-underline": "^3.20.4",
@@ -20,7 +21,8 @@
     "lucide-react": "^1.7.0",
     "multer": "^1.4.5-lts.1",
     "next": "^13.0.0",
-    "prisma": "^5.0.0",
+    "pg": "^8.20.0",
+    "prisma": "^7.7.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "react-hot-toast": "^2.6.0",

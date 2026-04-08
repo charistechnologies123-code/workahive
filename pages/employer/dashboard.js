@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import RichTextEditor from "../../components/RichTextEditor";
+import { useAuth } from "../../context/AuthContext";
 import {
   CATEGORY_OPTIONS,
   TYPE_OPTIONS,
@@ -33,8 +34,7 @@ function createEmptyApplicationField() {
 }
 
 export default function EmployerDashboard() {
-  const [me, setMe] = useState(null);
-  const [loadingMe, setLoadingMe] = useState(true);
+  const { user: me, loading: loadingMe, refresh: refreshAuth } = useAuth();
 
   const [company, setCompany] = useState(null);
   const [loadingCompany, setLoadingCompany] = useState(true);
@@ -90,24 +90,6 @@ export default function EmployerDashboard() {
     jobForm.locationPreset === "__OTHER__"
       ? jobForm.locationOther
       : jobForm.locationPreset;
-
-  const fetchMe = async () => {
-    setLoadingMe(true);
-    try {
-      const res = await fetch("/api/auth/me", { credentials: "include" });
-      const data = await res.json();
-
-      if (res.ok && data?.user) {
-        setMe(data.user);
-      } else {
-        setMe(null);
-      }
-    } catch {
-      setMe(null);
-    } finally {
-      setLoadingMe(false);
-    }
-  };
 
   const fetchCompany = async () => {
     setLoadingCompany(true);
@@ -184,7 +166,6 @@ export default function EmployerDashboard() {
   };
 
   useEffect(() => {
-    fetchMe();
     fetchCompany();
     fetchJobs();
     fetchLocations();
@@ -352,7 +333,7 @@ export default function EmployerDashboard() {
     });
 
     fetchJobs();
-    fetchMe();
+    refreshAuth();
   };
 
   const locationOptions = useMemo(() => {
@@ -399,7 +380,7 @@ export default function EmployerDashboard() {
             </p>
 
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <button type="button" className="btn-soft" onClick={fetchMe}>
+              <button type="button" className="btn-soft" onClick={refreshAuth}>
                 Refresh
               </button>
               <Link href="/employer/profile" className="btn-primary">
@@ -972,7 +953,7 @@ export default function EmployerDashboard() {
         ) : (
           <div className="job-list">
             {jobs.map((job) => (
-              <div key={job.id} className="job-item">
+              <div key={job.id} className="job-card employer-dashboard-job-card">
                 <div>
                   <p className="job-title">{job.title}</p>
                   <p className="muted small">

@@ -151,9 +151,19 @@ export default async function handler(req, res) {
         return res.status(403).json({ error: "Unauthorized to view this job" });
       }
 
+      const isSaved = Boolean(
+        user?.role === "JOBSEEKER"
+          ? await prisma.savedJob.findFirst({
+              where: { userId: user.id, jobId: job.id },
+              select: { id: true },
+            })
+          : null
+      );
+
       return res.status(200).json({
         ...job,
         applicantsCount: job._count?.applications || 0,
+        isSaved,
       });
     }
 

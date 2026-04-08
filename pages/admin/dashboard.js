@@ -889,7 +889,15 @@ export default function AdminDashboard() {
                   <strong>Company:</strong> {job.company?.name || "—"}
                 </p>
 
-                <p>{(job.description || "").slice(0, 140)}...</p>
+                <div style={{ marginTop: 8, marginBottom: 12 }}>
+                  {job.description ? (
+                    <p className="muted small" style={{ margin: 0 }}>
+                      {job.description.replace(/<[^>]*>/g, "").slice(0, 140)}...
+                    </p>
+                  ) : (
+                    <p className="muted small" style={{ margin: 0 }}>No description</p>
+                  )}
+                </div>
 
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                   {isOpen ? (

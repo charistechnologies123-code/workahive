@@ -380,14 +380,12 @@ export default function EmployerProfilePage() {
                 Refresh Balance
               </button>
 
-              <a href="https://wa.link/0hcoc5" className="btn-primary">
-                Contact Admin to Buy Tokens
-              </a>
+              <Link href="/support#buy-tokens" className="btn-primary">
+                Buy Tokens
+              </Link>
             </div>
 
-            <p className="muted small" style={{ margin: 0 }}>
-              You can contact admin to purchase tokens for job posting.
-            </p>
+            
           </div>
         )}
       </div>
