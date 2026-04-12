@@ -35,7 +35,18 @@ export default function MaintenancePage() {
             </div>
             <div className="maintenance-meta-item">
               <span className="maintenance-meta-label">Support</span>
-              <a href="mailto:support@workahive.com">support@workahive.com</a>
+              <div className="maintenance-support-links">
+                <a href="mailto:charistechnologies123@gmail.com">
+                  charistechnologies123@gmail.com
+                </a>
+                <a
+                  href="https://wa.me/2349130276015?text=Hello%20WorkaHive%20Support"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  WhatsApp Support
+                </a>
+              </div>
             </div>
           </div>
         </section>
@@ -131,6 +142,12 @@ export default function MaintenancePage() {
         .maintenance-meta-item a {
           color: #2563eb;
           font-weight: 700;
+        }
+
+        .maintenance-support-links {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
         }
 
         @media (max-width: 640px) {
