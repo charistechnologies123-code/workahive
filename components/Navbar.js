@@ -99,6 +99,7 @@ export default function Navbar() {
   const isAdminDashboard = router.pathname.startsWith("/admin/dashboard");
   const isAdminProfile = router.pathname === "/admin/profile";
   const isAdminTokens = router.pathname === "/admin/token-plans"; // new
+  const isBlogPage = router.pathname === "/blog" || router.pathname.startsWith("/blog/");
 
   const isJobseekerProfile = router.pathname === "/jobseeker/profile";
   const isJobseekerJobs = router.pathname === "/jobseeker/jobs";
@@ -128,6 +129,9 @@ export default function Navbar() {
           {/* Primary Navigation */}
           <Link href="/" className={router.pathname === "/" ? "active" : ""} onClick={closeSidebar}>
             Jobs
+          </Link>
+          <Link href="/blog" className={isBlogPage ? "active" : ""} onClick={closeSidebar}>
+            Blog
           </Link>
 
           {!loading && user?.role === "EMPLOYER" && (
@@ -217,6 +221,9 @@ export default function Navbar() {
           <nav className="nav-links">
             <Link href="/" className={router.pathname === "/" ? "active" : ""}>
               Jobs
+            </Link>
+            <Link href="/blog" className={isBlogPage ? "active" : ""}>
+              Blog
             </Link>
 
             {!loading && user?.role === "EMPLOYER" && (

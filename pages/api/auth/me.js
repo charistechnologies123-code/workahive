@@ -1,5 +1,6 @@
 import prisma from "../../../lib/prisma";
 import { getUserFromRequest } from "../../../lib/auth";
+import { ensureUserReferralCode } from "../../../lib/referrals";
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {
@@ -19,9 +20,15 @@ export default async function handler(req, res) {
         email: true,
         role: true,
         tokens: true,
+        referralCode: true,
+        emailVerified: true,
         createdAt: true,
       },
     });
+
+    if (user && !user.referralCode) {
+      user.referralCode = await ensureUserReferralCode(user.id, user.name);
+    }
 
     return res.status(200).json({ user: user || null });
   } catch (e) {

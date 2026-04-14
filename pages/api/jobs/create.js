@@ -1,6 +1,7 @@
 import prisma from "../../../lib/prisma";
 import { requireAuth } from "../../../lib/auth";
 import sanitizeHtml from "sanitize-html";
+import { logReferralActivity } from "../../../lib/referrals";
 
 const sanitizeRichText = (value) => {
   if (typeof value !== "string") return null;
@@ -266,6 +267,18 @@ const description = sanitizeRichText(raw.description);
           error: `Insufficient tokens. You need ${cost} token(s) to post a job.`,
           needed: cost,
         });
+      }
+
+      try {
+        await logReferralActivity(
+          employer.id,
+          "JOB_POSTED",
+          `Posted job: ${result.job.title}`,
+          `${result.job.title} was posted with location ${result.job.location || "unspecified"}.`,
+          { jobId: result.job.id }
+        );
+      } catch (activityError) {
+        console.error("Referral activity logging failed:", activityError);
       }
 
       return res.status(201).json({ job: result.job });

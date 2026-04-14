@@ -9,16 +9,8 @@ const strongPasswordRegex =
 function EyeIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"
-        stroke="currentColor"
-        strokeWidth="2"
-      />
-      <path
-        d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
-        stroke="currentColor"
-        strokeWidth="2"
-      />
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" stroke="currentColor" strokeWidth="2" />
+      <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" strokeWidth="2" />
     </svg>
   );
 }
@@ -27,21 +19,9 @@ function EyeOffIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M3 3l18 18" stroke="currentColor" strokeWidth="2" />
-      <path
-        d="M10.6 10.6a2 2 0 0 0 2.8 2.8"
-        stroke="currentColor"
-        strokeWidth="2"
-      />
-      <path
-        d="M9.5 5.1A10.4 10.4 0 0 1 12 5c6.5 0 10 7 10 7a18 18 0 0 1-3.2 4.2"
-        stroke="currentColor"
-        strokeWidth="2"
-      />
-      <path
-        d="M6.2 6.2C3.4 8.4 2 12 2 12s3.5 7 10 7c1.1 0 2.1-.2 3-.5"
-        stroke="currentColor"
-        strokeWidth="2"
-      />
+      <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" stroke="currentColor" strokeWidth="2" />
+      <path d="M9.5 5.1A10.4 10.4 0 0 1 12 5c6.5 0 10 7 10 7a18 18 0 0 1-3.2 4.2" stroke="currentColor" strokeWidth="2" />
+      <path d="M6.2 6.2C3.4 8.4 2 12 2 12s3.5 7 10 7c1.1 0 2.1-.2 3-.5" stroke="currentColor" strokeWidth="2" />
     </svg>
   );
 }
@@ -53,19 +33,19 @@ export default function Register() {
     password: "",
     confirmPassword: "",
     role: "JOBSEEKER",
+    referralCode: "",
   });
-
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-
   const router = useRouter();
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (event) => {
+    setForm((prev) => ({ ...prev, [event.target.name]: event.target.value }));
+  };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
-    // ✅ strong password check
     if (!strongPasswordRegex.test(form.password)) {
       toast.error(
         "Password must be at least 8 characters and include uppercase, lowercase, number, and special character."
@@ -73,38 +53,41 @@ export default function Register() {
       return;
     }
 
-    // ✅ confirm password check
     if (form.password !== form.confirmPassword) {
       toast.error("Passwords do not match. Please confirm your password.");
       return;
     }
 
-    const payload = {
-      name: form.name,
-      email: form.email,
-      password: form.password,
-      role: form.role,
-    };
-
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        name: form.name,
+        email: form.email,
+        password: form.password,
+        role: form.role,
+        referralCode: form.referralCode,
+      }),
     });
 
     const data = await res.json();
-
     if (!res.ok) {
       toast.error(data.error || "Registration failed");
       return;
     }
 
-    toast.success("Registration successful. Redirecting to login…");
+    toast.success(data.message || "Account created successfully.");
+    const params = new URLSearchParams({
+      email: form.email,
+      role: form.role,
+      sent: data.verificationEmailSent ? "true" : "false",
+      skipped: data.verificationEmailSkipped ? "true" : "false",
+    });
+    if (data.verificationEmailError) {
+      params.set("reason", data.verificationEmailError);
+    }
 
-    // redirect to login after a short delay
-    setTimeout(() => {
-      router.push("/login");
-    }, 1200);
+    router.push(`/verify-email/sent?${params.toString()}`);
   };
 
   return (
@@ -116,33 +99,16 @@ export default function Register() {
         <form onSubmit={handleSubmit} className="form">
           <div className="field">
             <label>Name</label>
-            <input
-              name="name"
-              type="text"
-              placeholder="Your full name"
-              value={form.name}
-              onChange={handleChange}
-              required
-              autoComplete="name"
-            />
+            <input name="name" type="text" placeholder="Your full name" value={form.name} onChange={handleChange} required autoComplete="name" />
           </div>
 
           <div className="field">
             <label>Email</label>
-            <input
-              name="email"
-              type="email"
-              placeholder="you@example.com"
-              value={form.email}
-              onChange={handleChange}
-              required
-              autoComplete="email"
-            />
+            <input name="email" type="email" placeholder="you@example.com" value={form.email} onChange={handleChange} required autoComplete="email" />
           </div>
 
           <div className="field">
             <label>Password</label>
-
             <div className="input-wrap">
               <input
                 name="password"
@@ -153,26 +119,14 @@ export default function Register() {
                 required
                 autoComplete="new-password"
               />
-
-              <button
-                type="button"
-                className="icon-btn"
-                onClick={() => setShowPassword((s) => !s)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-                title={showPassword ? "Hide password" : "Show password"}
-              >
+              <button type="button" className="icon-btn" onClick={() => setShowPassword((prev) => !prev)}>
                 {showPassword ? <EyeOffIcon /> : <EyeIcon />}
               </button>
             </div>
-
-            <p className="muted small" style={{ marginTop: 6 }}>
-              Must be at least 8 characters and include: uppercase, lowercase, number, special character.
-            </p>
           </div>
 
           <div className="field">
             <label>Confirm Password</label>
-
             <div className="input-wrap">
               <input
                 name="confirmPassword"
@@ -183,14 +137,7 @@ export default function Register() {
                 required
                 autoComplete="new-password"
               />
-
-              <button
-                type="button"
-                className="icon-btn"
-                onClick={() => setShowConfirm((s) => !s)}
-                aria-label={showConfirm ? "Hide password" : "Show password"}
-                title={showConfirm ? "Hide password" : "Show password"}
-              >
+              <button type="button" className="icon-btn" onClick={() => setShowConfirm((prev) => !prev)}>
                 {showConfirm ? <EyeOffIcon /> : <EyeIcon />}
               </button>
             </div>
@@ -204,15 +151,23 @@ export default function Register() {
             </select>
           </div>
 
+          <div className="field">
+            <label>Referral Code (optional)</label>
+            <input
+              name="referralCode"
+              type="text"
+              placeholder="Enter referral code if you have one"
+              value={form.referralCode}
+              onChange={handleChange}
+            />
+          </div>
+
           <button className="btn-primary" type="submit">
             Create account
           </button>
 
           <p className="small" style={{ marginTop: 12 }}>
-            Already have an account?{" "}
-            <Link href="/login" className="link">
-              Login
-            </Link>
+            Already have an account? <Link href="/login" className="link">Login</Link>
           </p>
         </form>
       </div>

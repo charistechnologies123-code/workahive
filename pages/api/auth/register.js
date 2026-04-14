@@ -2,7 +2,8 @@
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import prisma from "../../../lib/prisma";
-import { createNotification } from "../../../lib/notifications";
+import { generateUniqueReferralCode, maybeNotifyReferralMilestone } from "../../../lib/referrals";
+import { sendVerificationEmail } from "../../../lib/mailer";
 
 const strongPasswordRegex =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
@@ -12,7 +13,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { name, email, password, role } = req.body;
+  const { name, email, password, role, referralCode } = req.body;
 
   if (!name || !email || !password) {
     return res.status(400).json({ error: "Name, email and password are required" });
@@ -55,10 +56,22 @@ export default async function handler(req, res) {
     const safeFreeTokens =
       Number.isFinite(freeTokens) && freeTokens >= 0 ? freeTokens : 0;
 
-    const emailVerified = true;
-    const emailVerifiedAt = new Date();
-    const emailVerifyToken = null;
-    const emailVerifyExpires = null;
+    const trimmedReferralCode = String(referralCode || "").trim().toUpperCase();
+    let referrer = null;
+    if (trimmedReferralCode) {
+      referrer = await prisma.user.findUnique({
+        where: { referralCode: trimmedReferralCode },
+        select: { id: true },
+      });
+
+      if (!referrer) {
+        return res.status(400).json({ error: "Invalid referral code" });
+      }
+    }
+
+    const emailVerifyToken = crypto.randomBytes(32).toString("hex");
+    const emailVerifyExpires = new Date(Date.now() + 1000 * 60 * 60 * 24);
+    const generatedReferralCode = await generateUniqueReferralCode(trimmedName);
 
     const user = await prisma.user.create({
       data: {
@@ -67,8 +80,10 @@ export default async function handler(req, res) {
         passwordHash: hashed,
         role: finalRole,
         tokens: finalRole === "EMPLOYER" ? safeFreeTokens : 0,
-        emailVerified,
-        emailVerifiedAt,
+        referralCode: generatedReferralCode,
+        referredById: referrer?.id ?? null,
+        emailVerified: false,
+        emailVerifiedAt: null,
         emailVerifyToken,
         emailVerifyExpires,
       },
@@ -78,26 +93,43 @@ export default async function handler(req, res) {
         email: true,
         role: true,
         tokens: true,
+        referralCode: true,
         emailVerified: true,
       },
     });
 
-    // --- CREATE WELCOME NOTIFICATION ---
+    let emailStatus = { sent: false, skipped: false, error: null };
     try {
-      await createNotification(user.id, "WELCOME", { userName: user.name, role: user.role });
-    } catch (notificationError) {
-      console.error("Notification creation failed:", notificationError);
+      const result = await sendVerificationEmail({
+        email: normalizedEmail,
+        name: trimmedName,
+        role: finalRole,
+        token: emailVerifyToken,
+      });
+      emailStatus = {
+        sent: !result?.skipped,
+        skipped: Boolean(result?.skipped),
+        error: result?.reason || null,
+      };
+    } catch (emailError) {
+      console.error("Verification email failed:", emailError);
+      emailStatus = {
+        sent: false,
+        skipped: false,
+        error: emailError?.message || "Failed to send verification email",
+      };
     }
 
-    // --- EMAILS DISABLED ---
-    // Email sending is disabled in this deployment. No email will be sent here.
+    if (referrer?.id) {
+      await maybeNotifyReferralMilestone(referrer.id);
+    }
 
     return res.status(201).json({
       ...user,
-      message:
-        finalRole === "JOBSEEKER"
-          ? "Account created. Please verify your email."
-          : "Account created successfully.",
+      message: "Account created. Please verify your email before logging in.",
+      verificationEmailSent: emailStatus.sent,
+      verificationEmailSkipped: emailStatus.skipped,
+      verificationEmailError: emailStatus.error,
     });
   } catch (error) {
     console.error(error);

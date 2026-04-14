@@ -155,11 +155,12 @@ export default function Home() {
                 value={filters.category}
                 onChange={handleChange}
               >
-               {CATEGORY_OPTIONS.map((category) => (
-  <option key={category} value={category}>
-    {category}
-  </option>
-))}
+                <option value="">All Categories</option>
+                {CATEGORY_OPTIONS.filter((category) => !category.toLowerCase().startsWith("all")).map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
               </select>
             </div>
 

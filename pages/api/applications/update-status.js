@@ -1,6 +1,7 @@
 import prisma from "../../../lib/prisma";
 import jwt from "jsonwebtoken";
 import { createNotification } from "../../../lib/notifications";
+import { logReferralActivity } from "../../../lib/referrals";
 
 const JWT_SECRET = process.env.JWT_SECRET || "secret";
 
@@ -73,6 +74,18 @@ export default async function handler(req, res) {
       }
     } catch (notificationError) {
       console.error("Notification creation failed:", notificationError);
+    }
+
+    try {
+      await logReferralActivity(
+        application.applicant.id,
+        `APPLICATION_${status}`,
+        `${status === "SHORTLISTED" ? "Shortlisted for" : "Rejected for"} ${application.job.title}`,
+        `Application for "${application.job.title}" is now ${status.toLowerCase()}.`,
+        { applicationId: application.id, jobId: application.job.id }
+      );
+    } catch (activityError) {
+      console.error("Referral activity logging failed:", activityError);
     }
 
     return res.status(200).json({ application: updated });

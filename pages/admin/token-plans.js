@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { useConfirmDialog } from "../../components/ConfirmDialog";
 
 export default function AdminTokenPlans() {
   const { user } = useAuth();
+  const { confirm, dialog } = useConfirmDialog();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -167,27 +169,31 @@ export default function AdminTokenPlans() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this token plan? This action cannot be undone."))
-      return;
+    confirm({
+      title: "Delete token plan",
+      message: "Are you sure you want to delete this token plan? This action cannot be undone.",
+      confirmText: "Delete plan",
+      onConfirm: async () => {
+        try {
+          const res = await fetch("/api/token-plans", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ id }),
+          });
 
-    try {
-      const res = await fetch("/api/token-plans", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ id }),
-      });
+          if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.error || "Failed to delete plan");
+          }
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to delete plan");
-      }
-
-      fetchPlans();
-      showSuccess("Token plan deleted successfully!");
-    } catch (err) {
-      showError(err.message || "Failed to delete token plan");
-    }
+          fetchPlans();
+          showSuccess("Token plan deleted successfully!");
+        } catch (err) {
+          showError(err.message || "Failed to delete token plan");
+        }
+      },
+    });
   };
 
   if (user?.role !== "ADMIN") {
@@ -347,6 +353,7 @@ export default function AdminTokenPlans() {
           </div>
         )}
       </div>
+      {dialog}
     </div>
   );
 }

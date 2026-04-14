@@ -44,6 +44,9 @@ export default async function handler(req, res) {
     return res.status(200).json({
       id: user.id,
       role: user.role,
+      email: user.email,
+      emailVerified: Boolean(user.emailVerified),
+      needsEmailVerification: user.role !== "ADMIN" && !user.emailVerified,
       mustChangePassword,
     });
   } catch (error) {

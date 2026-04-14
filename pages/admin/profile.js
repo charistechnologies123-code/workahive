@@ -58,6 +58,8 @@ export default function AdminProfile() {
     newPassword: "",
     confirmNewPassword: "",
   });
+  const [testEmail, setTestEmail] = useState("");
+  const [sendingTestEmail, setSendingTestEmail] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -74,6 +76,7 @@ export default function AdminProfile() {
 
       setMe(data.user);
       setProfile({ name: data.user.name || "", email: data.user.email || "" });
+      setTestEmail(data.user.email || "");
     } catch {
       toast.error("Failed to load profile");
     }
@@ -136,6 +139,39 @@ export default function AdminProfile() {
 
     toast.success("Password updated.");
     setPw({ currentPassword: "", newPassword: "", confirmNewPassword: "" });
+  };
+
+  const sendTestEmail = async (e) => {
+    e.preventDefault();
+
+    if (!testEmail.trim()) {
+      toast.error("Enter a recipient email address.");
+      return;
+    }
+
+    setSendingTestEmail(true);
+
+    try {
+      const res = await fetch("/api/admin/test-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ to: testEmail }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || "Failed to send test email");
+        return;
+      }
+
+      toast.success(data.message || "Test email sent.");
+    } catch {
+      toast.error("Failed to send test email");
+    } finally {
+      setSendingTestEmail(false);
+    }
   };
 
   if (loading)
@@ -299,6 +335,32 @@ export default function AdminProfile() {
 
           <button className="btn-primary" type="submit">
             Update Password
+          </button>
+        </form>
+      </div>
+
+      <div className="card">
+        <div className="card-head">
+          <h2>Send Test Email</h2>
+          <p className="muted small">
+            Use this to confirm that Resend, your sender address, and your app environment are configured correctly.
+          </p>
+        </div>
+
+        <form onSubmit={sendTestEmail} className="form">
+          <div className="field">
+            <label>Recipient Email</label>
+            <input
+              type="email"
+              value={testEmail}
+              onChange={(e) => setTestEmail(e.target.value)}
+              placeholder="you@example.com"
+              required
+            />
+          </div>
+
+          <button className="btn-primary" type="submit" disabled={sendingTestEmail}>
+            {sendingTestEmail ? "Sending..." : "Send Test Email"}
           </button>
         </form>
       </div>

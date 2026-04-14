@@ -1,6 +1,7 @@
 import prisma from "../../../lib/prisma";
 import { requireAuth } from "../../../lib/auth";
 import { createNotification } from "../../../lib/notifications";
+import { logReferralActivity } from "../../../lib/referrals";
 import multer from "multer";
 import fs from "fs";
 import path from "path";
@@ -174,6 +175,18 @@ async function handler(req, res) {
       });
     } catch (notificationError) {
       console.error("Notification creation failed:", notificationError);
+    }
+
+    try {
+      await logReferralActivity(
+        applicant.id,
+        "JOB_APPLIED",
+        `Applied for ${job.title}`,
+        `Applied for job "${job.title}".`,
+        { jobId: job.id, applicationId: application.id }
+      );
+    } catch (activityError) {
+      console.error("Referral activity logging failed:", activityError);
     }
 
     return res.status(201).json({

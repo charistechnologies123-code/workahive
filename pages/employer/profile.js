@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import ReferralsSection from "../../components/ReferralsSection";
 
 function CoinIcon() {
   return (
@@ -495,6 +496,8 @@ export default function EmployerProfilePage() {
           </div>
         )}
       </div>
+
+      <ReferralsSection />
     </div>
   );
 }

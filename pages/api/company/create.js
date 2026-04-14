@@ -1,6 +1,7 @@
 import prisma from "../../../lib/prisma";
 import { requireAuth } from "../../../lib/auth";
 import { createNotification } from "../../../lib/notifications";
+import { logReferralActivity } from "../../../lib/referrals";
 
 const normalize = (v) => {
   if (typeof v !== "string") return null;
@@ -132,6 +133,18 @@ export default requireAuth(
         }
       } catch (notificationError) {
         console.error("Notification creation failed:", notificationError);
+      }
+
+      try {
+        await logReferralActivity(
+          user.id,
+          "COMPANY_CREATED",
+          "Created company profile",
+          `${name} company profile was created and is awaiting verification.`,
+          { companyId: company.id, companyName: name }
+        );
+      } catch (activityError) {
+        console.error("Referral activity logging failed:", activityError);
       }
 
       return res.status(201).json({ company });

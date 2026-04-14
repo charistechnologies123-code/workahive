@@ -1,6 +1,7 @@
 import prisma from "../../../../lib/prisma";
 import { getUserFromRequest } from "../../../../lib/auth";
 import { createNotification } from "../../../../lib/notifications";
+import { logReferralActivity } from "../../../../lib/referrals";
 
 export default async function handler(req, res) {
   const me = getUserFromRequest(req);
@@ -41,6 +42,13 @@ export default async function handler(req, res) {
         await createNotification(company.owner.id, "COMPANY_VERIFIED", {
           companyName: company.name,
         });
+        await logReferralActivity(
+          company.owner.id,
+          "COMPANY_VERIFIED",
+          "Company profile verified",
+          `${company.name} has been verified by admin.`,
+          { companyId: company.id }
+        );
       }
 
       return res.status(200).json({ company });
