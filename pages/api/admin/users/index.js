@@ -35,6 +35,7 @@ export default async function handler(req, res) {
       id: true,
       name: true,
       email: true,
+      emailVerified: true,
       role: true,
       tokens: true,
       createdAt: true,

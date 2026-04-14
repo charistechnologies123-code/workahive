@@ -224,6 +224,7 @@ export function UsersSection({ currentAdminId }) {
   const [q, setQ] = useState("");
   const [role, setRole] = useState("ALL");
   const [loading, setLoading] = useState(false);
+  const [updatingUserId, setUpdatingUserId] = useState(null);
   const [users, setUsers] = useState([]);
   const { confirm, dialog } = useConfirmDialog();
 
@@ -270,6 +271,27 @@ export function UsersSection({ currentAdminId }) {
         setUsers((prev) => prev.filter((item) => item.id !== user.id));
       },
     });
+  };
+
+  const setEmailVerified = async (user, emailVerified) => {
+    setUpdatingUserId(user.id);
+    const res = await fetch(`/api/admin/users/${user.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ emailVerified }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      toast.error(data.error || "Failed to update email verification");
+      setUpdatingUserId(null);
+      return;
+    }
+    setUsers((prev) => prev.map((item) => (item.id === user.id ? data.user : item)));
+    toast.success(
+      emailVerified ? "User email marked as verified." : "User email marked as unverified."
+    );
+    setUpdatingUserId(null);
   };
 
   return (
@@ -323,11 +345,33 @@ export function UsersSection({ currentAdminId }) {
                   <p className="muted small">
                     {user.email} • {user.role}
                     {user.role === "EMPLOYER" ? ` • ${user.tokens ?? 0} tokens` : ""}
+                    {` | ${user.emailVerified ? "Email verified" : "Email not verified"}`}
                   </p>
                 </div>
-                <button type="button" className="btn-soft" onClick={() => removeUser(user)}>
-                  Delete
-                </button>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {user.emailVerified ? (
+                    <button
+                      type="button"
+                      className="btn-soft"
+                      disabled={updatingUserId === user.id}
+                      onClick={() => setEmailVerified(user, false)}
+                    >
+                      {updatingUserId === user.id ? "Please wait..." : "Mark Unverified"}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      disabled={updatingUserId === user.id}
+                      onClick={() => setEmailVerified(user, true)}
+                    >
+                      {updatingUserId === user.id ? "Please wait..." : "Mark Verified"}
+                    </button>
+                  )}
+                  <button type="button" className="btn-soft" onClick={() => removeUser(user)}>
+                    Delete
+                  </button>
+                </div>
               </div>
             ))}
           </div>
