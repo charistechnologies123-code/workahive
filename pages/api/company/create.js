@@ -9,6 +9,20 @@ const normalize = (v) => {
   return s.length ? s : null;
 };
 
+const normalizeExtraSocials = (value) => {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const label = normalize(item.label);
+      const url = normalize(item.url);
+      if (!label || !url) return null;
+      return { label, url };
+    })
+    .filter(Boolean);
+};
+
 const isLikelyUrl = (v) => {
   const s = normalize(v);
   if (!s) return false;
@@ -38,9 +52,11 @@ export default requireAuth(
 
     const facebook = normalize(raw.facebook);
     const instagram = normalize(raw.instagram);
+    const github = normalize(raw.github);
     const linkedin = normalize(raw.linkedin);
     const x = normalize(raw.x);
     const youtube = normalize(raw.youtube);
+    const extraSocials = normalizeExtraSocials(raw.extraSocials);
 
     if (!name) return res.status(400).json({ error: "Company name is required" });
 
@@ -58,12 +74,20 @@ export default requireAuth(
       });
     }
 
-    // At least one online presence required
-    const presenceLinks = [website, facebook, instagram, linkedin, x, youtube].filter(Boolean);
-    if (presenceLinks.length === 0) {
+    // At least one social link required
+    const socialLinks = [
+      facebook,
+      instagram,
+      github,
+      linkedin,
+      x,
+      youtube,
+      ...extraSocials.map((item) => item.url),
+    ].filter(Boolean);
+    if (socialLinks.length === 0) {
       return res.status(400).json({
         error:
-          "Provide at least one online presence link (website or any social media link).",
+          "Provide at least one social media link before creating your company profile.",
       });
     }
 
@@ -76,9 +100,11 @@ export default requireAuth(
     checkLink("website", website);
     checkLink("facebook", facebook);
     checkLink("instagram", instagram);
+    checkLink("github", github);
     checkLink("linkedin", linkedin);
     checkLink("x", x);
     checkLink("youtube", youtube);
+    extraSocials.forEach((item, index) => checkLink(`extra social #${index + 1} (${item.label})`, item.url));
 
     if (invalidLinks.length > 0) {
       return res.status(400).json({
@@ -104,9 +130,11 @@ export default requireAuth(
           proofNote,
           facebook,
           instagram,
+          github,
           linkedin,
           x,
           youtube,
+          extraSocials,
           ownerId: user.id,
           // verified stays false by default; admins verify manually
         },

@@ -53,6 +53,14 @@ function SocialLinkRow({ label, href }) {
   );
 }
 
+function getExtraSocials(company) {
+  return Array.isArray(company?.extraSocials)
+    ? company.extraSocials.filter(
+        (item) => item && typeof item.label === "string" && typeof item.url === "string"
+      )
+    : [];
+}
+
 export default function EmployerProfilePage() {
   const [me, setMe] = useState(null);
   const [company, setCompany] = useState(null);
@@ -68,6 +76,7 @@ export default function EmployerProfilePage() {
   const [savingPassword, setSavingPassword] = useState(false);
 
   const tokenBalance = useMemo(() => Number(me?.tokens ?? 0), [me]);
+  const extraSocials = useMemo(() => getExtraSocials(company), [company]);
 
   const fetchMe = async () => {
     setLoadingMe(true);
@@ -472,15 +481,21 @@ export default function EmployerProfilePage() {
               <div style={{ display: "grid", gap: 10 }}>
                 <SocialLinkRow label="Facebook" href={company.facebook} />
                 <SocialLinkRow label="Instagram" href={company.instagram} />
+                <SocialLinkRow label="GitHub" href={company.github} />
                 <SocialLinkRow label="LinkedIn" href={company.linkedin} />
                 <SocialLinkRow label="X (Twitter)" href={company.x} />
                 <SocialLinkRow label="YouTube" href={company.youtube} />
+                {extraSocials.map((item, index) => (
+                  <SocialLinkRow key={`${item.label}-${index}`} label={item.label} href={item.url} />
+                ))}
 
                 {!company.facebook &&
                   !company.instagram &&
+                  !company.github &&
                   !company.linkedin &&
                   !company.x &&
-                  !company.youtube && (
+                  !company.youtube &&
+                  extraSocials.length === 0 && (
                     <p className="muted small" style={{ margin: 0 }}>
                       No social links added.
                     </p>

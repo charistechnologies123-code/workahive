@@ -5,6 +5,15 @@ import RichTextEditor from "../../components/RichTextEditor";
 import { useAuth } from "../../context/AuthContext";
 import { CATEGORY_OPTIONS, TYPE_OPTIONS, WORKMODE_OPTIONS } from "../../lib/constants";
 
+const SOCIAL_FIELD_OPTIONS = [
+  { key: "facebook", label: "Facebook" },
+  { key: "x", label: "X (Twitter)" },
+  { key: "instagram", label: "Instagram" },
+  { key: "github", label: "GitHub" },
+  { key: "linkedin", label: "LinkedIn" },
+  { key: "youtube", label: "YouTube" },
+];
+
 const APPLICATION_FIELD_TYPES = [
   { label: "Short Text", value: "TEXT" },
   { label: "Long Text", value: "TEXTAREA" },
@@ -14,6 +23,14 @@ const APPLICATION_FIELD_TYPES = [
 
 function createEmptyApplicationField() {
   return { label: "", type: "TEXT", required: true, placeholder: "" };
+}
+
+function createEmptySocialField() {
+  return { label: "", url: "" };
+}
+
+function CoinIcon() {
+  return <span aria-hidden="true">{"\u{1FA99}"}</span>;
 }
 
 export default function EmployerDashboard() {
@@ -33,6 +50,13 @@ export default function EmployerDashboard() {
     website: "",
     regNo: "",
     proofNote: "",
+    facebook: "",
+    x: "",
+    instagram: "",
+    github: "",
+    linkedin: "",
+    youtube: "",
+    extraSocials: [],
   });
 
   const [jobForm, setJobForm] = useState({
@@ -47,6 +71,17 @@ export default function EmployerDashboard() {
 
   const canPostJob = Boolean(company?.verified);
   const tokenBalance = useMemo(() => Number(me?.tokens ?? 0), [me]);
+  const hasCompany = Boolean(company);
+
+  const hasAnySocialLink = () => {
+    const builtInSocials = SOCIAL_FIELD_OPTIONS.some(({ key }) =>
+      String(companyForm[key] || "").trim()
+    );
+    const extraSocials = companyForm.extraSocials.some(
+      (item) => String(item?.label || "").trim() && String(item?.url || "").trim()
+    );
+    return builtInSocials || extraSocials;
+  };
 
   const fetchCompany = async () => {
     setLoadingCompany(true);
@@ -110,6 +145,10 @@ export default function EmployerDashboard() {
 
   const submitCompany = async (event) => {
     event.preventDefault();
+    if (!hasAnySocialLink()) {
+      toast.error("Add at least one social media link before creating your company profile.");
+      return;
+    }
     const res = await fetch("/api/company/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -123,6 +162,22 @@ export default function EmployerDashboard() {
     }
     toast.success("Company profile created successfully.");
     setCompany(data.company);
+    setCompanyForm({
+      name: "",
+      description: "",
+      industry: "",
+      location: "",
+      website: "",
+      regNo: "",
+      proofNote: "",
+      facebook: "",
+      x: "",
+      instagram: "",
+      github: "",
+      linkedin: "",
+      youtube: "",
+      extraSocials: [],
+    });
     fetchCompany();
   };
 
@@ -163,7 +218,9 @@ export default function EmployerDashboard() {
       <div className="card">
         <div className="card-head">
           <h2>Tokens</h2>
-          <p className="muted">Balance: {loadingMe ? "Loading..." : `${tokenBalance} token(s)`}</p>
+          <p className="muted">
+            {loadingMe ? "Loading..." : <><CoinIcon /> Token(s): {tokenBalance}</>}
+          </p>
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <button type="button" className="btn-soft" onClick={refreshAuth}>Refresh</button>
@@ -191,6 +248,10 @@ export default function EmployerDashboard() {
               <div className="field"><label>Industry</label><input readOnly value={company.industry || ""} /></div>
               <div className="field"><label>Location</label><input readOnly value={company.location || ""} /></div>
             </div>
+            <div className="field">
+              <label>Verification</label>
+              <input readOnly value={company.verified ? "Verified and ready to post jobs." : "Pending verification."} />
+            </div>
           </div>
         ) : (
           <form onSubmit={submitCompany} className="form">
@@ -207,6 +268,74 @@ export default function EmployerDashboard() {
               <div className="field"><label>Registration Number</label><input value={companyForm.regNo} onChange={(e) => setCompanyForm((p) => ({ ...p, regNo: e.target.value }))} /></div>
               <div className="field"><label>Alternative Proof Note</label><input value={companyForm.proofNote} onChange={(e) => setCompanyForm((p) => ({ ...p, proofNote: e.target.value }))} /></div>
             </div>
+            <div className="card" style={{ marginBottom: 0 }}>
+              <div className="card-head">
+                <h3>Online Presence</h3>
+                <p className="muted small">Add at least one social profile link before creating your company.</p>
+              </div>
+              <div className="grid-2">
+                {SOCIAL_FIELD_OPTIONS.map((field) => (
+                  <div className="field" key={field.key}>
+                    <label>{field.label}</label>
+                    <input
+                      type="url"
+                      value={companyForm[field.key]}
+                      onChange={(e) => setCompanyForm((p) => ({ ...p, [field.key]: e.target.value }))}
+                      placeholder={`https://${field.key === "x" ? "x.com/your-company" : `${field.key}.com/your-company`}`}
+                    />
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: "grid", gap: 12 }}>
+                {companyForm.extraSocials.map((field, index) => (
+                  <div key={index} className="grid-2">
+                    <div className="field">
+                      <label>Social Label</label>
+                      <input
+                        value={field.label}
+                        onChange={(e) =>
+                          setCompanyForm((p) => ({
+                            ...p,
+                            extraSocials: p.extraSocials.map((item, i) =>
+                              i === index ? { ...item, label: e.target.value } : item
+                            ),
+                          }))
+                        }
+                        placeholder="e.g. TikTok"
+                      />
+                    </div>
+                    <div className="field">
+                      <label>Social URL</label>
+                      <input
+                        type="url"
+                        value={field.url}
+                        onChange={(e) =>
+                          setCompanyForm((p) => ({
+                            ...p,
+                            extraSocials: p.extraSocials.map((item, i) =>
+                              i === index ? { ...item, url: e.target.value } : item
+                            ),
+                          }))
+                        }
+                        placeholder="https://example.com/your-company"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                className="btn-soft"
+                onClick={() =>
+                  setCompanyForm((p) => ({
+                    ...p,
+                    extraSocials: [...p.extraSocials, createEmptySocialField()],
+                  }))
+                }
+              >
+                Add Social Field
+              </button>
+            </div>
             <button className="btn-primary" type="submit">Create Company Profile</button>
           </form>
         )}
@@ -216,10 +345,19 @@ export default function EmployerDashboard() {
         <div className="card-head">
           <h2>Create Job</h2>
           <p className="muted">
-            {!company ? "Create your company profile first." : canPostJob ? "Type the full job location and it will still be filterable by city." : "Your company must be verified before posting jobs."}
+            {!hasCompany
+              ? "Create a company profile and get verified in order to start posting jobs."
+              : canPostJob
+                ? "Type the full job location and it will still be filterable by city."
+                : "Create a company profile and get verified in order to start posting jobs."}
           </p>
         </div>
 
+        {!hasCompany ? (
+          <p className="muted">Create a company profile and get verified in order to start posting jobs.</p>
+        ) : !canPostJob ? (
+          <p className="muted">Create a company profile and get verified in order to start posting jobs.</p>
+        ) : (
         <form onSubmit={submitJob} className="form">
           <div className="field"><label>Job Title</label><input value={jobForm.title} onChange={(e) => setJobForm((p) => ({ ...p, title: e.target.value }))} disabled={!canPostJob} required /></div>
           <div className="field">
@@ -299,6 +437,7 @@ export default function EmployerDashboard() {
 
           <button className="btn-primary" type="submit" disabled={!canPostJob}>Post Job</button>
         </form>
+        )}
       </div>
 
       <div className="card">
