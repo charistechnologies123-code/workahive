@@ -3,6 +3,51 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import { useConfirmDialog } from "../ConfirmDialog";
 
+function ReadOnlyField({ label, value, multiline = false }) {
+  return (
+    <div className="field">
+      <label>{label}</label>
+      {multiline ? (
+        <textarea rows={4} value={value || ""} readOnly />
+      ) : (
+        <input value={value || ""} readOnly />
+      )}
+    </div>
+  );
+}
+
+function SocialLinkRow({ label, href }) {
+  if (!href) return null;
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        gap: 12,
+        padding: "10px 12px",
+        borderRadius: 10,
+        border: "1px solid rgba(255,255,255,0.08)",
+        background: "rgba(255,255,255,0.03)",
+        flexWrap: "wrap",
+      }}
+    >
+      <span>{label}</span>
+      <a href={href} target="_blank" rel="noreferrer" style={{ wordBreak: "break-all" }}>
+        {href}
+      </a>
+    </div>
+  );
+}
+
+function getExtraSocials(company) {
+  return Array.isArray(company?.extraSocials)
+    ? company.extraSocials.filter(
+        (item) => item && typeof item.label === "string" && typeof item.url === "string"
+      )
+    : [];
+}
+
 export function AdminSummaryCard({ title, description, href, meta }) {
   return (
     <Link href={href} className="admin-summary-card">
@@ -389,6 +434,7 @@ export function CompaniesSection() {
   const [selected, setSelected] = useState(null);
   const [detailsErr, setDetailsErr] = useState("");
   const { confirm, dialog } = useConfirmDialog();
+  const selectedExtraSocials = useMemo(() => getExtraSocials(selected), [selected]);
 
   const load = async () => {
     setLoading(true);
@@ -501,12 +547,82 @@ export function CompaniesSection() {
             {selected && (
               <div className="form">
                 <div className="grid-2">
-                  <div className="field"><label>Owner Name</label><input value={selected.owner?.name || ""} readOnly /></div>
-                  <div className="field"><label>Owner Email</label><input value={selected.owner?.email || ""} readOnly /></div>
-                  <div className="field"><label>Location</label><input value={selected.location || ""} readOnly /></div>
-                  <div className="field"><label>Industry</label><input value={selected.industry || ""} readOnly /></div>
+                  <ReadOnlyField label="Company Name" value={selected.name || ""} />
+                  <ReadOnlyField label="Status" value={selected.verified ? "Verified" : "Pending verification"} />
                 </div>
-                <div className="field"><label>Description</label><textarea rows={4} value={selected.description || ""} readOnly /></div>
+                <div className="grid-2">
+                  <ReadOnlyField label="Owner Name" value={selected.owner?.name || ""} />
+                  <ReadOnlyField label="Owner Email" value={selected.owner?.email || ""} />
+                </div>
+                <div className="grid-2">
+                  <ReadOnlyField label="Owner Tokens" value={selected.owner?.tokens != null ? String(selected.owner.tokens) : ""} />
+                  <ReadOnlyField label="Location" value={selected.location || ""} />
+                </div>
+                <div className="grid-2">
+                  <ReadOnlyField label="Industry" value={selected.industry || ""} />
+                  <ReadOnlyField label="Website" value={selected.website || ""} />
+                </div>
+                <ReadOnlyField label="Description" value={selected.description || ""} multiline />
+                <div className="grid-2">
+                  <ReadOnlyField label="Registration Number" value={selected.regNo || ""} />
+                  <ReadOnlyField label="Alternative Proof Note" value={selected.proofNote || ""} />
+                </div>
+
+                <div className="card" style={{ marginBottom: 0 }}>
+                  <div className="card-head">
+                    <h3 style={{ margin: 0 }}>Online Presence</h3>
+                    <p className="muted small" style={{ marginTop: 6 }}>
+                      Social profiles and links submitted during company creation.
+                    </p>
+                  </div>
+                  <div style={{ display: "grid", gap: 10 }}>
+                    <SocialLinkRow label="Facebook" href={selected.facebook} />
+                    <SocialLinkRow label="Instagram" href={selected.instagram} />
+                    <SocialLinkRow label="GitHub" href={selected.github} />
+                    <SocialLinkRow label="LinkedIn" href={selected.linkedin} />
+                    <SocialLinkRow label="X (Twitter)" href={selected.x} />
+                    <SocialLinkRow label="YouTube" href={selected.youtube} />
+                    {selectedExtraSocials.map((item, index) => (
+                      <SocialLinkRow key={`${item.label}-${index}`} label={item.label} href={item.url} />
+                    ))}
+                    {!selected.facebook &&
+                      !selected.instagram &&
+                      !selected.github &&
+                      !selected.linkedin &&
+                      !selected.x &&
+                      !selected.youtube &&
+                      selectedExtraSocials.length === 0 && (
+                        <p className="muted small" style={{ margin: 0 }}>
+                          No online presence links added.
+                        </p>
+                      )}
+                  </div>
+                </div>
+
+                <div className="card" style={{ marginBottom: 0 }}>
+                  <div className="card-head">
+                    <h3 style={{ margin: 0 }}>Recent Jobs</h3>
+                    <p className="muted small" style={{ marginTop: 6 }}>
+                      Latest jobs posted by this company.
+                    </p>
+                  </div>
+                  {Array.isArray(selected.jobs) && selected.jobs.length > 0 ? (
+                    <div className="job-list">
+                      {selected.jobs.map((job) => (
+                        <div key={job.id} className="job-item">
+                          <div>
+                            <p className="job-title">{job.title || "—"}</p>
+                            <p className="muted small">
+                              {job.status || "—"} • {job.createdAt ? new Date(job.createdAt).toLocaleDateString() : "—"}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="muted">No jobs posted yet.</p>
+                  )}
+                </div>
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                   <button
                     type="button"
