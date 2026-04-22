@@ -340,7 +340,7 @@ export default function Navbar() {
           {/* Employer token balance */}
           {!loading && user?.role === "EMPLOYER" && (
             <div className="nav-token-pill" title="Token balance">
-              <span>{"\u{1FA99}"} Token(s): {typeof user.tokens === "number" ? user.tokens : 0}</span>
+              <span>{"\u{1FA99}"} {typeof user.tokens === "number" ? user.tokens : 0}</span>
             </div>
           )}
 

@@ -204,8 +204,7 @@ export default function EmployerDashboard() {
       location: "",
       applicationFields: [],
     });
-    fetchJobs();
-    refreshAuth();
+    await Promise.all([fetchJobs(), refreshAuth()]);
   };
 
   return (
@@ -353,11 +352,7 @@ export default function EmployerDashboard() {
           </p>
         </div>
 
-        {!hasCompany ? (
-          <p className="muted">Create a company profile and get verified in order to start posting jobs.</p>
-        ) : !canPostJob ? (
-          <p className="muted">Create a company profile and get verified in order to start posting jobs.</p>
-        ) : (
+        {!hasCompany || !canPostJob ? null : (
         <form onSubmit={submitJob} className="form">
           <div className="field"><label>Job Title</label><input value={jobForm.title} onChange={(e) => setJobForm((p) => ({ ...p, title: e.target.value }))} disabled={!canPostJob} required /></div>
           <div className="field">
