@@ -1,11 +1,13 @@
 import prisma from "../../../lib/prisma";
-import { getUserFromRequest } from "../../../lib/auth";
+import { getAuthenticatedUser } from "../../../lib/auth";
 
 export default async function handler(req, res) {
-  const jwtUser = getUserFromRequest(req);
-  if (!jwtUser) {
-    return res.status(401).json({ error: "Unauthorized" });
+  const auth = await getAuthenticatedUser(req);
+  if (auth.error) {
+    return res.status(auth.error.status).json(auth.error.body);
   }
+
+  const user = auth.user;
 
   try {
     if (req.method === "GET") {
@@ -13,16 +15,16 @@ export default async function handler(req, res) {
 
       const [notifications, total, unreadCount] = await Promise.all([
         prisma.notification.findMany({
-          where: { userId: jwtUser.id },
+          where: { userId: user.id },
           orderBy: { createdAt: "desc" },
-          take: parseInt(limit),
-          skip: parseInt(skip),
+          take: parseInt(limit, 10),
+          skip: parseInt(skip, 10),
         }),
         prisma.notification.count({
-          where: { userId: jwtUser.id },
+          where: { userId: user.id },
         }),
         prisma.notification.count({
-          where: { userId: jwtUser.id, read: false },
+          where: { userId: user.id, read: false },
         }),
       ]);
 
@@ -34,7 +36,7 @@ export default async function handler(req, res) {
     }
 
     if (req.method === "PUT") {
-      const { ids } = req.body; // Mark multiple as read
+      const { ids } = req.body;
 
       if (!ids || !Array.isArray(ids)) {
         return res.status(400).json({ error: "Invalid request" });
@@ -43,13 +45,13 @@ export default async function handler(req, res) {
       await prisma.notification.updateMany({
         where: {
           id: { in: ids },
-          userId: jwtUser.id,
+          userId: user.id,
         },
         data: { read: true },
       });
 
       const unreadCount = await prisma.notification.count({
-        where: { userId: jwtUser.id, read: false },
+        where: { userId: user.id, read: false },
       });
 
       return res.status(200).json({ success: true, unreadCount });
@@ -64,8 +66,8 @@ export default async function handler(req, res) {
 
       await prisma.notification.deleteMany({
         where: {
-          id: parseInt(id),
-          userId: jwtUser.id,
+          id: parseInt(id, 10),
+          userId: user.id,
         },
       });
 

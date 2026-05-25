@@ -1,5 +1,5 @@
 import prisma from "../../../lib/prisma";
-import { getUserFromRequest } from "../../../lib/auth";
+import { getAuthenticatedUser, getUserFromRequest } from "../../../lib/auth";
 import sanitizeHtml from "sanitize-html";
 
 const sanitizeRichText = (value) => {
@@ -171,8 +171,11 @@ export default async function handler(req, res) {
     // PATCH Job (Edit or Change Status)
     // ----------------------------
     if (req.method === "PATCH") {
-      const user = getUserFromRequest(req);
-      if (!user) return res.status(401).json({ error: "Unauthorized" });
+      const auth = await getAuthenticatedUser(req);
+      if (auth.error) {
+        return res.status(auth.error.status).json(auth.error.body);
+      }
+      const user = auth.user;
 
       const job = await prisma.job.findUnique({
         where: { id: jobId },

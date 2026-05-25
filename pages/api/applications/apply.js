@@ -2,6 +2,7 @@ import prisma from "../../../lib/prisma";
 import { requireAuth } from "../../../lib/auth";
 import { createNotification } from "../../../lib/notifications";
 import { logReferralActivity } from "../../../lib/referrals";
+import { sendNewApplicationEmail } from "../../../lib/mailer";
 import multer from "multer";
 import fs from "fs";
 import path from "path";
@@ -105,6 +106,12 @@ async function handler(req, res) {
         company: {
           select: {
             ownerId: true,
+            owner: {
+              select: {
+                name: true,
+                email: true,
+              },
+            },
           },
         },
       },
@@ -175,6 +182,19 @@ async function handler(req, res) {
       });
     } catch (notificationError) {
       console.error("Notification creation failed:", notificationError);
+    }
+
+    if (job.company.owner?.email) {
+      try {
+        await sendNewApplicationEmail({
+          email: job.company.owner.email,
+          name: job.company.owner.name,
+          applicantName: applicant.name || "A candidate",
+          jobTitle: job.title,
+        });
+      } catch (emailError) {
+        console.error("New application email failed:", emailError);
+      }
     }
 
     try {

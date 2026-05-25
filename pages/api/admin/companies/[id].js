@@ -2,6 +2,7 @@ import prisma from "../../../../lib/prisma";
 import { getUserFromRequest } from "../../../../lib/auth";
 import { createNotification } from "../../../../lib/notifications";
 import { logReferralActivity } from "../../../../lib/referrals";
+import { sendCompanyVerifiedEmail } from "../../../../lib/mailer";
 
 export default async function handler(req, res) {
   const me = getUserFromRequest(req);
@@ -35,7 +36,7 @@ export default async function handler(req, res) {
       const company = await prisma.company.update({
         where: { id },
         data: { verified },
-        include: { owner: { select: { id: true, name: true } } },
+        include: { owner: { select: { id: true, name: true, email: true } } },
       });
 
       if (verified && company.owner?.id) {
@@ -49,6 +50,18 @@ export default async function handler(req, res) {
           `${company.name} has been verified by admin.`,
           { companyId: company.id }
         );
+
+        if (company.owner.email) {
+          try {
+            await sendCompanyVerifiedEmail({
+              email: company.owner.email,
+              name: company.owner.name,
+              companyName: company.name,
+            });
+          } catch (emailError) {
+            console.error("Company verified email failed:", emailError);
+          }
+        }
       }
 
       return res.status(200).json({ company });

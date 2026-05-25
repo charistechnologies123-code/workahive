@@ -1,15 +1,8 @@
 import prisma from "../../../lib/prisma";
-import jwt from "jsonwebtoken";
+import { getAuthenticatedUser } from "../../../lib/auth";
 import { createNotification } from "../../../lib/notifications";
 import { logReferralActivity } from "../../../lib/referrals";
-
-const JWT_SECRET = process.env.JWT_SECRET || "secret";
-
-function getTokenFromCookie(req) {
-  const cookie = req.headers.cookie || "";
-  const match = cookie.match(/(?:^|;\s*)token=([^;]+)/);
-  return match ? decodeURIComponent(match[1]) : null;
-}
+import { sendApplicationStatusEmail } from "../../../lib/mailer";
 
 const VALID_STATUSES = ["APPLIED", "SHORTLISTED", "REJECTED"];
 
@@ -19,17 +12,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    const token = getTokenFromCookie(req);
-    if (!token) {
-      return res.status(401).json({ error: "Unauthenticated" });
+    const auth = await getAuthenticatedUser(req, { allowedRoles: ["EMPLOYER"] });
+    if (auth.error) {
+      return res.status(auth.error.status).json(auth.error.body);
     }
 
-    const payload = jwt.verify(token, JWT_SECRET);
-
-    if (payload.role !== "EMPLOYER") {
-      return res.status(403).json({ error: "Forbidden" });
-    }
-
+    const user = auth.user;
     const { applicationId, status } = req.body;
 
     if (!applicationId) {
@@ -43,8 +31,8 @@ export default async function handler(req, res) {
     const application = await prisma.application.findUnique({
       where: { id: applicationId },
       include: {
-        job: { select: { postedById: true, title: true } },
-        applicant: { select: { id: true, name: true } },
+        job: { select: { id: true, postedById: true, title: true } },
+        applicant: { select: { id: true, name: true, email: true } },
       },
     });
 
@@ -52,7 +40,7 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: "Application not found" });
     }
 
-    if (application.job.postedById !== payload.id) {
+    if (application.job.postedById !== user.id) {
       return res.status(403).json({ error: "Unauthorized" });
     }
 
@@ -61,7 +49,6 @@ export default async function handler(req, res) {
       data: { status },
     });
 
-    // --- CREATE NOTIFICATION FOR APPLICANT ---
     try {
       if (status === "SHORTLISTED") {
         await createNotification(application.applicant.id, "APPLICATION_SHORTLISTED", {
@@ -74,6 +61,19 @@ export default async function handler(req, res) {
       }
     } catch (notificationError) {
       console.error("Notification creation failed:", notificationError);
+    }
+
+    if (["SHORTLISTED", "REJECTED"].includes(status) && application.applicant.email) {
+      try {
+        await sendApplicationStatusEmail({
+          email: application.applicant.email,
+          name: application.applicant.name,
+          jobTitle: application.job.title,
+          status,
+        });
+      } catch (emailError) {
+        console.error("Application status email failed:", emailError);
+      }
     }
 
     try {
@@ -89,8 +89,8 @@ export default async function handler(req, res) {
     }
 
     return res.status(200).json({ application: updated });
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error(error);
     return res.status(500).json({ error: "Something went wrong" });
   }
 }

@@ -28,12 +28,19 @@ export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const presetEmail = String(router.query.email || "");
+  const resetStatus = String(router.query.reset || "");
 
   useEffect(() => {
     if (presetEmail) {
       setForm((prev) => ({ ...prev, email: presetEmail }));
     }
   }, [presetEmail]);
+
+  useEffect(() => {
+    if (resetStatus === "success") {
+      toast.success("Password reset successful. Please log in.");
+    }
+  }, [resetStatus]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -46,18 +53,18 @@ export default function Login() {
     });
 
     const data = await res.json();
+    if (data.needsEmailVerification) {
+      return router.push(
+        `/verify-email/sent?email=${encodeURIComponent(data.email || form.email)}&role=${encodeURIComponent(data.role || "JOBSEEKER")}`
+      );
+    }
+
     if (!res.ok) {
       toast.error(data.error || "Login failed");
       return;
     }
 
     window.dispatchEvent(new Event("auth-changed"));
-
-    if (data.needsEmailVerification) {
-      return router.push(
-        `/verify-email/sent?email=${encodeURIComponent(data.email || form.email)}&role=${encodeURIComponent(data.role || "JOBSEEKER")}`
-      );
-    }
 
     toast.success("Login successful.");
 

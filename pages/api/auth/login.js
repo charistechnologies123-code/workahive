@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import prisma from "../../../lib/prisma";
+import { EMAIL_VERIFICATION_ERROR } from "../../../lib/auth";
 
 const JWT_SECRET = process.env.JWT_SECRET || "secret";
 
@@ -30,6 +31,15 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
+    if (user.role !== "ADMIN" && !user.emailVerified) {
+      return res.status(403).json({
+        error: EMAIL_VERIFICATION_ERROR,
+        email: user.email,
+        role: user.role,
+        needsEmailVerification: true,
+      });
+    }
+
     const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: "7d" });
 
     // HttpOnly cookie (recommended: add SameSite, Secure in production)
@@ -46,7 +56,7 @@ export default async function handler(req, res) {
       role: user.role,
       email: user.email,
       emailVerified: Boolean(user.emailVerified),
-      needsEmailVerification: user.role !== "ADMIN" && !user.emailVerified,
+      needsEmailVerification: false,
       mustChangePassword,
     });
   } catch (error) {

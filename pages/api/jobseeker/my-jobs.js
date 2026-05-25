@@ -1,5 +1,5 @@
 import prisma from "../../../lib/prisma";
-import { getUserFromRequest } from "../../../lib/auth";
+import { getAuthenticatedUser } from "../../../lib/auth";
 
 function getInteractionPriority(status) {
   const s = String(status || "").toUpperCase();
@@ -16,15 +16,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    const user = getUserFromRequest(req);
-
-    if (!user) {
-      return res.status(401).json({ error: "Unauthorized" });
+    const auth = await getAuthenticatedUser(req, { allowedRoles: ["JOBSEEKER"] });
+    if (auth.error) {
+      return res.status(auth.error.status).json(auth.error.body);
     }
 
-    if (user.role !== "JOBSEEKER") {
-      return res.status(403).json({ error: "Only job seekers can access this resource" });
-    }
+    const user = auth.user;
 
     const [savedJobs, applications] = await Promise.all([
       prisma.savedJob.findMany({

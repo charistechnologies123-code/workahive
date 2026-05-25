@@ -1,5 +1,5 @@
 import prisma from "../../../lib/prisma";
-import { getUserFromRequest } from "../../../lib/auth";
+import { getAuthenticatedUser } from "../../../lib/auth";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -7,16 +7,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    const user = getUserFromRequest(req);
-
-    if (!user) {
-      return res.status(401).json({ error: "Unauthorized" });
+    const auth = await getAuthenticatedUser(req, { allowedRoles: ["JOBSEEKER"] });
+    if (auth.error) {
+      return res.status(auth.error.status).json(auth.error.body);
     }
 
-    if (user.role !== "JOBSEEKER") {
-      return res.status(403).json({ error: "Only job seekers can save jobs" });
-    }
-
+    const user = auth.user;
     const { jobId } = req.body;
 
     if (!jobId) {

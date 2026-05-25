@@ -1,5 +1,5 @@
 import prisma from "../../../lib/prisma";
-import { getUserFromRequest } from "../../../lib/auth";
+import { getAuthenticatedUser } from "../../../lib/auth";
 import { ensureUserReferralCode } from "../../../lib/referrals";
 
 export default async function handler(req, res) {
@@ -7,10 +7,12 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const user = getUserFromRequest(req);
-  if (!user) {
-    return res.status(401).json({ error: "Unauthorized" });
+  const auth = await getAuthenticatedUser(req);
+  if (auth.error) {
+    return res.status(auth.error.status).json(auth.error.body);
   }
+
+  const user = auth.user;
 
   const me = await prisma.user.findUnique({
     where: { id: user.id },

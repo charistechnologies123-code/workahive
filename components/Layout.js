@@ -16,6 +16,7 @@ export default function Layout({ children }) {
       "/login",
       "/register",
       "/forgot-password",
+      "/reset-password",
       "/verify-email",
       "/verify-email/sent",
     ]);

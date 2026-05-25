@@ -1,13 +1,5 @@
 import prisma from "../../../lib/prisma";
-import jwt from "jsonwebtoken";
-
-const JWT_SECRET = process.env.JWT_SECRET || "secret";
-
-function getTokenFromCookie(req) {
-  const cookie = req.headers.cookie || "";
-  const match = cookie.match(/(?:^|;\s*)token=([^;]+)/);
-  return match ? decodeURIComponent(match[1]) : null;
-}
+import { getAuthenticatedUser } from "../../../lib/auth";
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {
@@ -15,19 +7,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    const token = getTokenFromCookie(req);
-    if (!token) {
-      return res.status(401).json({ error: "Unauthenticated" });
+    const auth = await getAuthenticatedUser(req, { allowedRoles: ["EMPLOYER"] });
+    if (auth.error) {
+      return res.status(auth.error.status).json(auth.error.body);
     }
 
-    const payload = jwt.verify(token, JWT_SECRET);
-
-    if (payload.role !== "EMPLOYER") {
-      return res.status(403).json({ error: "Forbidden" });
-    }
-
-    const employerId = payload.id;
-
+    const user = auth.user;
     const rawJobId = req.query.jobId;
     let parsedJobId = null;
 
@@ -42,7 +27,7 @@ export default async function handler(req, res) {
     const applications = await prisma.application.findMany({
       where: {
         job: {
-          postedById: employerId,
+          postedById: user.id,
           ...(parsedJobId ? { id: parsedJobId } : {}),
         },
       },
@@ -74,16 +59,8 @@ export default async function handler(req, res) {
       applications,
       total: applications.length,
     });
-  } catch (err) {
-    console.error(err);
-
-    if (
-      err?.name === "JsonWebTokenError" ||
-      err?.name === "TokenExpiredError"
-    ) {
-      return res.status(401).json({ error: "Invalid or expired session" });
-    }
-
+  } catch (error) {
+    console.error(error);
     return res.status(500).json({ error: "Something went wrong" });
   }
 }
