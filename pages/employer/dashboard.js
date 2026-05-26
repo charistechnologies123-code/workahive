@@ -366,7 +366,7 @@ export default function EmployerDashboard() {
 
         {!hasCompany || !canPostJob ? null : (
         <form onSubmit={submitJob} className="form">
-          <div className="field"><label>Job Title</label><input value={jobForm.title} onChange={(e) => setJobForm((p) => ({ ...p, title: e.target.value }))} disabled={!canPostJob} required /></div>
+          <div className="field"><label>Job Title *</label><input value={jobForm.title} onChange={(e) => setJobForm((p) => ({ ...p, title: e.target.value }))} disabled={!canPostJob} required /></div>
           <div className="field">
             <label>Description</label>
             <RichTextEditor value={jobForm.description} onChange={(value) => setJobForm((p) => ({ ...p, description: value }))} />
@@ -382,19 +382,20 @@ export default function EmployerDashboard() {
               />
             </div>
             <div className="field">
-              <label>Application Deadline</label>
+              <label>Application Deadline *</label>
               <input
                 type="date"
                 value={jobForm.applicationDeadline}
                 onChange={(e) => setJobForm((p) => ({ ...p, applicationDeadline: e.target.value }))}
                 disabled={!canPostJob}
+                required
               />
             </div>
           </div>
           <div className="grid-2">
             <div className="field">
-              <label>Category</label>
-              <select value={jobForm.category} onChange={(e) => setJobForm((p) => ({ ...p, category: e.target.value }))} disabled={!canPostJob}>
+              <label>Category *</label>
+              <select value={jobForm.category} onChange={(e) => setJobForm((p) => ({ ...p, category: e.target.value }))} disabled={!canPostJob} required>
                 <option value="">Select category</option>
                 {CATEGORY_OPTIONS.filter((item) => !item.toLowerCase().startsWith("all")).map((item) => (
                   <option key={item} value={item}>{item}</option>
@@ -402,8 +403,8 @@ export default function EmployerDashboard() {
               </select>
             </div>
             <div className="field">
-              <label>Job Type</label>
-              <select value={jobForm.type} onChange={(e) => setJobForm((p) => ({ ...p, type: e.target.value }))} disabled={!canPostJob}>
+              <label>Job Type *</label>
+              <select value={jobForm.type} onChange={(e) => setJobForm((p) => ({ ...p, type: e.target.value }))} disabled={!canPostJob} required>
                 <option value="">Select type</option>
                 {TYPE_OPTIONS.map((item) => <option key={item} value={item}>{item}</option>)}
               </select>
@@ -411,14 +412,14 @@ export default function EmployerDashboard() {
           </div>
           <div className="grid-2">
             <div className="field">
-              <label>Work Mode</label>
-              <select value={jobForm.workMode} onChange={(e) => setJobForm((p) => ({ ...p, workMode: e.target.value }))} disabled={!canPostJob}>
+              <label>Work Mode *</label>
+              <select value={jobForm.workMode} onChange={(e) => setJobForm((p) => ({ ...p, workMode: e.target.value }))} disabled={!canPostJob} required>
                 <option value="">Select work mode</option>
                 {WORKMODE_OPTIONS.map((mode) => <option key={mode.value} value={mode.value}>{mode.label}</option>)}
               </select>
             </div>
             <div className="field">
-              <label>Location</label>
+              <label>Location *</label>
               <input
                 value={jobForm.location}
                 onChange={(e) => {
@@ -428,6 +429,7 @@ export default function EmployerDashboard() {
                 placeholder="e.g. Bodija, Ibadan, Oyo State"
                 list="location-suggest"
                 disabled={!canPostJob}
+                required
               />
               <datalist id="location-suggest">
                 {locationSuggest.map((item) => <option key={item} value={item} />)}
@@ -442,7 +444,8 @@ export default function EmployerDashboard() {
                   <p className="muted small">
                     Add optional custom questions for applicants. You can ask
                     for typed answers, file uploads, or either type or upload
-                    for flexible prompts like cover letters.
+                    for flexible prompts like cover letters. Any question you
+                    add will be required for applicants.
                   </p>
                 </div>
             <button type="button" className="btn-soft" disabled={!canPostJob} onClick={() => setJobForm((p) => ({ ...p, applicationFields: [...p.applicationFields, createEmptyApplicationField()] }))}>
@@ -467,7 +470,7 @@ export default function EmployerDashboard() {
                       ×
                     </button>
                   </div>
-                  <div className="field"><label>Question</label><input value={field.label} onChange={(e) => setJobForm((p) => ({ ...p, applicationFields: p.applicationFields.map((item, i) => i === index ? { ...item, label: e.target.value } : item) }))} placeholder="e.g. Share your cover letter or tell us why you are a great fit" /></div>
+                  <div className="field"><label>Question *</label><input value={field.label} onChange={(e) => setJobForm((p) => ({ ...p, applicationFields: p.applicationFields.map((item, i) => i === index ? { ...item, label: e.target.value } : item) }))} placeholder="e.g. Share your cover letter or tell us why you are a great fit" required /></div>
                   <div className="grid-2">
                     <div className="field">
                       <label>Type</label>

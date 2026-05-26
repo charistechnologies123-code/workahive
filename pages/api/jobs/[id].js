@@ -280,19 +280,27 @@ export default async function handler(req, res) {
       }
 
       if (description !== undefined) {
-  const normalizedDescription = sanitizeRichText(description);
-  if (!normalizedDescription) {
-    return res.status(400).json({ error: "Description cannot be empty" });
-  }
-  data.description = normalizedDescription;
-}
+        const normalizedDescription = sanitizeRichText(description);
+        if (!normalizedDescription) {
+          return res.status(400).json({ error: "Description cannot be empty" });
+        }
+        data.description = normalizedDescription;
+      }
 
       if (category !== undefined) {
-        data.category = normalizeSpaces(category);
+        const normalizedCategory = normalizeSpaces(category);
+        if (!normalizedCategory) {
+          return res.status(400).json({ error: "Category cannot be empty" });
+        }
+        data.category = normalizedCategory;
       }
 
       if (type !== undefined) {
-        data.type = normalizeSpaces(type);
+        const normalizedType = normalizeSpaces(type);
+        if (!normalizedType) {
+          return res.status(400).json({ error: "Job type cannot be empty" });
+        }
+        data.type = normalizedType;
       }
 
       if (salary !== undefined) {
@@ -300,13 +308,17 @@ export default async function handler(req, res) {
       }
 
       if (location !== undefined) {
-        data.location = location ? smartCase(location) : null;
+        const normalizedLocation = normalizeSpaces(location);
+        if (!normalizedLocation) {
+          return res.status(400).json({ error: "Location cannot be empty" });
+        }
+        data.location = smartCase(normalizedLocation);
       }
 
       if (workMode !== undefined) {
         const normalizedWorkMode = workMode ? sanitizeWorkMode(workMode) : null;
 
-        if (workMode && !normalizedWorkMode) {
+        if (!normalizedWorkMode) {
           return res.status(400).json({ error: "Invalid work mode" });
         }
 
@@ -333,7 +345,11 @@ export default async function handler(req, res) {
 
       if (applicationDeadline !== undefined) {
         try {
-          data.applicationDeadline = parseApplicationDeadline(applicationDeadline);
+          const deadline = parseApplicationDeadline(applicationDeadline);
+          if (!deadline) {
+            return res.status(400).json({ error: "Application deadline cannot be empty" });
+          }
+          data.applicationDeadline = deadline;
         } catch (err) {
           return res.status(400).json({ error: err.message || "Invalid application deadline" });
         }

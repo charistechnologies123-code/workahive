@@ -190,8 +190,7 @@ export default requireAuth(
     const raw = req.body || {};
 
     const title = normalizeSpaces(raw.title);
-
-const description = sanitizeRichText(raw.description);
+    const description = sanitizeRichText(raw.description);
 
     if (!title || !description) {
       return res.status(400).json({ error: "Title and description are required" });
@@ -211,6 +210,27 @@ const description = sanitizeRichText(raw.description);
     } catch (err) {
       return res.status(400).json({ error: err.message || "Invalid application fields" });
     }
+
+    if (!category) {
+      return res.status(400).json({ error: "Category is required." });
+    }
+
+    if (!type) {
+      return res.status(400).json({ error: "Job type is required." });
+    }
+
+    if (!workMode) {
+      return res.status(400).json({ error: "Work mode is required." });
+    }
+
+    if (!locationInput) {
+      return res.status(400).json({ error: "Location is required." });
+    }
+
+    if (!applicationDeadline) {
+      return res.status(400).json({ error: "Application deadline is required." });
+    }
+
     const deadlineAlreadyPassed =
       applicationDeadline && applicationDeadline.getTime() <= Date.now();
 
@@ -289,11 +309,11 @@ const description = sanitizeRichText(raw.description);
           companyId: employer.company.id,
           postedById: employer.id,
           applicationFields,
+          applicationDeadline,
         };
         const withOptionalData = {
           ...baseData,
           ...(salary ? { salary } : {}),
-          ...(applicationDeadline ? { applicationDeadline } : {}),
         };
 
         let job;

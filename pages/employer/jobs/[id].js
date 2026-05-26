@@ -465,18 +465,19 @@ export default function EmployerJobManage() {
             </div>
 
             <div className="field">
-              <label>Application Deadline</label>
+              <label>Application Deadline *</label>
               <input
                 type="date"
                 value={form.applicationDeadline}
                 onChange={(e) => setForm((prev) => ({ ...prev, applicationDeadline: e.target.value }))}
+                required
               />
             </div>
           </div>
 
           <div className="grid-2">
             <div className="field">
-              <label>Category</label>
+              <label>Category *</label>
               <select
                 value={form.categoryPreset}
                 onChange={(e) =>
@@ -510,7 +511,7 @@ export default function EmployerJobManage() {
             </div>
 
             <div className="field">
-              <label>Job Type</label>
+              <label>Job Type *</label>
               <select
                 value={form.typePreset}
                 onChange={(e) =>
@@ -545,12 +546,13 @@ export default function EmployerJobManage() {
 
           <div className="grid-2">
             <div className="field">
-              <label>Work Mode</label>
+              <label>Work Mode *</label>
               <select
                 value={form.workMode}
                 onChange={(e) =>
                   setForm((prev) => ({ ...prev, workMode: e.target.value }))
                 }
+                required
               >
                 <option value="">Select work mode</option>
                 {WORKMODE_OPTIONS.map((m) => (
@@ -562,13 +564,14 @@ export default function EmployerJobManage() {
             </div>
 
             <div className="field">
-              <label>Location</label>
+              <label>Location *</label>
               <input
                 value={form.location}
                 onChange={(e) =>
                   setForm((prev) => ({ ...prev, location: e.target.value }))
                 }
                 placeholder="e.g. Ogbomoso, Ibadan, Lagos"
+                required
               />
             </div>
           </div>
@@ -589,7 +592,8 @@ export default function EmployerJobManage() {
                   <p className="muted small" style={{ marginTop: 6 }}>
                     Edit the extra questions applicants must answer before
                     submitting. Need a cover letter? Ask for type only,
-                    file only, or allow both text and upload.
+                    file only, or allow both text and upload. Any question you
+                    add will be required for applicants.
                   </p>
                 </div>
 
@@ -648,6 +652,7 @@ export default function EmployerJobManage() {
                           updateApplicationField(index, { label: e.target.value })
                         }
                         placeholder="e.g. Share your cover letter or tell us why you are a great fit"
+                        required
                       />
                     </div>
 
