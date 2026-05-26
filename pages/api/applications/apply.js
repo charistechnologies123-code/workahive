@@ -37,6 +37,19 @@ function runMulter(req, res) {
   });
 }
 
+function serializeError(error) {
+  if (!error) return null;
+
+  return {
+    name: error.name,
+    message: error.message,
+    code: error.code,
+    status: error.status,
+    statusCode: error.statusCode,
+    stack: error.stack,
+  };
+}
+
 function parseCustomAnswers(raw) {
   if (!raw) return null;
 
@@ -83,9 +96,24 @@ async function handler(req, res) {
 
   const applicant = req.user;
   let uploadedCv = null;
+  const requestId =
+    req.headers["x-vercel-id"] ||
+    req.headers["x-request-id"] ||
+    `apply-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+  console.log("[applications/apply] start", {
+    requestId,
+    applicantId: applicant?.id,
+    method: req.method,
+  });
 
   try {
     await runMulter(req, res);
+    console.log("[applications/apply] multer complete", {
+      requestId,
+      hasFile: Boolean(req.file),
+      bodyKeys: Object.keys(req.body || {}),
+    });
 
     const { jobId, customAnswers } = req.body;
 
@@ -144,6 +172,11 @@ async function handler(req, res) {
     });
 
     if (existing) {
+      console.warn("[applications/apply] duplicate application blocked", {
+        requestId,
+        jobId: parsedJobId,
+        applicantId: applicant.id,
+      });
       return res.status(400).json({ error: "You have already applied for this job." });
     }
 
@@ -151,17 +184,32 @@ async function handler(req, res) {
     try {
       parsedCustomAnswers = parseCustomAnswers(customAnswers);
     } catch (err) {
-      try {
-        fs.unlinkSync(path.join(uploadDir, cvFile.filename));
-      } catch (_) {}
-
+      console.error("[applications/apply] custom answers parse failed", {
+        requestId,
+        error: serializeError(err),
+      });
       return res.status(400).json({ error: err.message || "Invalid custom answers" });
     }
 
     const customAnswerError = validateCustomAnswers(job.applicationFields, parsedCustomAnswers);
     if (customAnswerError) {
+      console.warn("[applications/apply] custom answers validation failed", {
+        requestId,
+        jobId: job.id,
+        applicantId: applicant.id,
+        error: customAnswerError,
+      });
       return res.status(400).json({ error: customAnswerError });
     }
+
+    console.log("[applications/apply] uploading cv", {
+      requestId,
+      jobId: job.id,
+      applicantId: applicant.id,
+      fileName: cvFile.originalname,
+      contentType: cvFile.mimetype,
+      fileSize: cvFile.size,
+    });
 
     uploadedCv = await uploadCvToStorage({
       buffer: cvFile.buffer,
@@ -169,6 +217,14 @@ async function handler(req, res) {
       originalName: cvFile.originalname,
       jobId: job.id,
       applicantId: applicant.id,
+    });
+
+    console.log("[applications/apply] cv uploaded", {
+      requestId,
+      jobId: job.id,
+      applicantId: applicant.id,
+      storagePath: uploadedCv.path,
+      publicUrl: uploadedCv.publicUrl,
     });
 
     const application = await prisma.application.create({
@@ -180,6 +236,13 @@ async function handler(req, res) {
         customAnswers: parsedCustomAnswers,
         status: "APPLIED",
       },
+    });
+
+    console.log("[applications/apply] application saved", {
+      requestId,
+      applicationId: application.id,
+      jobId: job.id,
+      applicantId: applicant.id,
     });
 
     // --- CREATE NOTIFICATION FOR EMPLOYER ---
@@ -221,6 +284,12 @@ async function handler(req, res) {
       application,
     });
   } catch (error) {
+    console.error("[applications/apply] failed", {
+      requestId,
+      applicantId: applicant?.id,
+      error: serializeError(error),
+    });
+
     if (uploadedCv?.path) {
       await deleteCvFromStorage(uploadedCv.path);
     }
