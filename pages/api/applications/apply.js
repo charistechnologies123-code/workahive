@@ -4,25 +4,10 @@ import { createNotification } from "../../../lib/notifications";
 import { logReferralActivity } from "../../../lib/referrals";
 import { sendNewApplicationEmail } from "../../../lib/mailer";
 import multer from "multer";
-import fs from "fs";
-import path from "path";
-
-// Create directory for CV uploads if it doesn't exist
-const uploadDir = path.join(process.cwd(), "public", "uploads", "cvs");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: uploadDir,
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + "-" + file.originalname.replace(/\s+/g, "_"));
-  },
-});
+import { deleteCvFromStorage, uploadCvToStorage } from "../../../lib/cv-storage";
 
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
   fileFilter: (req, file, cb) => {
     const allowed = [
@@ -97,6 +82,7 @@ async function handler(req, res) {
   }
 
   const applicant = req.user;
+  let uploadedCv = null;
 
   try {
     await runMulter(req, res);
@@ -158,10 +144,6 @@ async function handler(req, res) {
     });
 
     if (existing) {
-      try {
-        fs.unlinkSync(path.join(uploadDir, cvFile.filename));
-      } catch (_) {}
-
       return res.status(400).json({ error: "You have already applied for this job." });
     }
 
@@ -178,18 +160,22 @@ async function handler(req, res) {
 
     const customAnswerError = validateCustomAnswers(job.applicationFields, parsedCustomAnswers);
     if (customAnswerError) {
-      try {
-        fs.unlinkSync(path.join(uploadDir, cvFile.filename));
-      } catch (_) {}
-
       return res.status(400).json({ error: customAnswerError });
     }
+
+    uploadedCv = await uploadCvToStorage({
+      buffer: cvFile.buffer,
+      contentType: cvFile.mimetype,
+      originalName: cvFile.originalname,
+      jobId: job.id,
+      applicantId: applicant.id,
+    });
 
     const application = await prisma.application.create({
       data: {
         jobId: job.id,
         applicantId: applicant.id,
-        cvPath: `/uploads/cvs/${cvFile.filename}`,
+        cvPath: uploadedCv.publicUrl,
         coverLetter: null,
         customAnswers: parsedCustomAnswers,
         status: "APPLIED",
@@ -235,6 +221,10 @@ async function handler(req, res) {
       application,
     });
   } catch (error) {
+    if (uploadedCv?.path) {
+      await deleteCvFromStorage(uploadedCv.path);
+    }
+
     if (error?.code === "P2002") {
       return res.status(400).json({ error: "You have already applied for this job." });
     }
