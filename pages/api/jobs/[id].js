@@ -1,6 +1,7 @@
 import prisma from "../../../lib/prisma";
 import { getAuthenticatedUser, getUserFromRequest } from "../../../lib/auth";
 import sanitizeHtml from "sanitize-html";
+import { closeExpiredJobs } from "../../../lib/job-expiry";
 
 const sanitizeRichText = (value) => {
   if (typeof value !== "string") return null;
@@ -160,6 +161,8 @@ export default async function handler(req, res) {
   }
 
   try {
+    await closeExpiredJobs();
+
     // ----------------------------
     // GET Job Details
     // ----------------------------
@@ -357,6 +360,22 @@ export default async function handler(req, res) {
           data: fallbackData,
           select: {
             ...FALLBACK_JOB_SELECT,
+            company: true,
+            postedBy: true,
+            _count: { select: { applications: true } },
+          },
+        });
+      }
+
+      if (
+        updated?.status === "OPEN" &&
+        updated?.applicationDeadline &&
+        new Date(updated.applicationDeadline).getTime() <= Date.now()
+      ) {
+        updated = await prisma.job.update({
+          where: { id: jobId },
+          data: { status: "CLOSED" },
+          include: {
             company: true,
             postedBy: true,
             _count: { select: { applications: true } },

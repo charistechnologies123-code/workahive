@@ -1,6 +1,7 @@
 // pages/api/jobs/index.js
 import prisma from "../../../lib/prisma";
 import { getUserFromRequest } from "../../../lib/auth";
+import { closeExpiredJobs } from "../../../lib/job-expiry";
 
 const ALLOWED_STATUSES = new Set(["OPEN", "CLOSED", "ALL"]);
 const ALLOWED_WORK_MODES = new Set(["REMOTE", "HYBRID", "ONSITE"]);
@@ -45,6 +46,8 @@ export default async function handler(req, res) {
   const skip = (page - 1) * limit;
 
   try {
+    await closeExpiredJobs();
+
     const andConditions = [];
 
     // ----------------------------

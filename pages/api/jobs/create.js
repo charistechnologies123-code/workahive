@@ -202,6 +202,8 @@ const description = sanitizeRichText(raw.description);
     } catch (err) {
       return res.status(400).json({ error: err.message || "Invalid application fields" });
     }
+    const deadlineAlreadyPassed =
+      applicationDeadline && applicationDeadline.getTime() <= Date.now();
 
     try {
       const employer = await prisma.user.findUnique({
@@ -274,7 +276,7 @@ const description = sanitizeRichText(raw.description);
           type,
           location: canonicalLocation,
           workMode,
-          status: "OPEN",
+          status: deadlineAlreadyPassed ? "CLOSED" : "OPEN",
           companyId: employer.company.id,
           postedById: employer.id,
           applicationFields,
