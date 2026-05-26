@@ -61,6 +61,13 @@ export default function AdminProfile() {
   const [testEmail, setTestEmail] = useState("");
   const [sendingTestEmail, setSendingTestEmail] = useState(false);
 
+  const formatDateTime = (value) => {
+    if (!value) return "";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    return date.toLocaleString();
+  };
+
   const load = async () => {
     setLoading(true);
 
@@ -212,6 +219,11 @@ export default function AdminProfile() {
                 Email cannot be changed here. Contact admin support for formal update requests.
               </p>
             </div>
+          </div>
+
+          <div className="field">
+            <label>Joined WorkaHive</label>
+            <input value={formatDateTime(me?.createdAt)} readOnly />
           </div>
 
           <button className="btn-primary" type="submit">

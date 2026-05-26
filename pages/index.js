@@ -126,6 +126,13 @@ export default function Home() {
       ? 0
       : Math.min(pagination.page * pagination.limit, pagination.total);
 
+  const formatDateTime = (value) => {
+    if (!value) return "—";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "—";
+    return date.toLocaleString();
+  };
+
   return (
     <div>
       <div className="container">
@@ -237,6 +244,9 @@ export default function Home() {
             <h3>{job.title}</h3>
             <p>{job.company?.name || "Unknown Company"}</p>
 
+            <p className="muted small">
+              Posted: <b>{formatDateTime(job.createdAt)}</b>
+            </p>
             {job.location && <p>Location: {job.location}</p>}
             {job.type && <p>Type: {job.type}</p>}
             {job.workMode && <p>Work Mode: {job.workMode}</p>}

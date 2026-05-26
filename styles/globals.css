@@ -1971,6 +1971,31 @@ form {
   color: #ef4444;
 }
 
+/* Navbar spacing + consistent control heights */
+.nav-inner {
+  padding: 6px 16px;
+  min-height: 56px;
+}
+
+.nav-links a,
+.nav-link,
+.desktop-logout,
+.nav-actions .btn-soft,
+.nav-actions .btn-primary,
+.notification-bell,
+.nav-token-pill {
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  line-height: 1;
+}
+
+.nav-actions {
+  gap: 8px;
+}
+
 .question-remove-btn {
   display: inline-flex;
   align-items: center;
@@ -2000,4 +2025,21 @@ form {
     width: auto;
     max-height: 60vh;
   }
+}
+
+/* Final navbar overrides to keep height compact and consistent */
+.nav-inner {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  min-height: 56px;
+}
+
+.nav-links a,
+.nav-link,
+.desktop-logout,
+.nav-actions .btn-soft,
+.nav-actions .btn-primary,
+.notification-bell,
+.nav-token-pill {
+  height: 36px;
 }

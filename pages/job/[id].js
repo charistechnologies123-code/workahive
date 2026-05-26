@@ -23,6 +23,13 @@ function formatDate(value) {
   return date.toLocaleDateString();
 }
 
+function formatDateTime(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleString();
+}
+
 export default function JobDetail() {
   const router = useRouter();
   const { id } = router.query;
@@ -402,6 +409,9 @@ export default function JobDetail() {
             </p>
             <p className="muted small" style={{ margin: 0 }}>
               Applicants: <b>{job.applicantsCount}</b>
+            </p>
+            <p className="muted small" style={{ margin: 0 }}>
+              Posted: <b>{formatDateTime(job.createdAt)}</b>
             </p>
             <p className="muted small" style={{ margin: 0 }}>
               Salary: <b>{job.salary || "—"}</b> • Deadline: <b>{formatDate(job.applicationDeadline)}</b>

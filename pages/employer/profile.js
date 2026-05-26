@@ -24,6 +24,13 @@ function Field({ label, value, multiline = false }) {
   );
 }
 
+function formatDateTime(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString();
+}
+
 function SocialLinkRow({ label, href }) {
   if (!href) return null;
 
@@ -245,6 +252,11 @@ export default function EmployerProfilePage() {
                 value={me.id != null ? String(me.id) : ""}
               />
             </div>
+
+            <Field
+              label="Joined WorkaHive"
+              value={formatDateTime(me.createdAt)}
+            />
           </div>
         )}
       </div>

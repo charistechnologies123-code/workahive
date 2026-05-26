@@ -12,6 +12,13 @@ function Field({ label, value }) {
   );
 }
 
+function formatDateTime(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString();
+}
+
 export default function JobSeekerProfilePage() {
   const [me, setMe] = useState(null);
   const [loadingMe, setLoadingMe] = useState(true);
@@ -181,6 +188,11 @@ export default function JobSeekerProfilePage() {
                 value={me.id != null ? String(me.id) : ""}
               />
             </div>
+
+            <Field
+              label="Joined WorkaHive"
+              value={formatDateTime(me.createdAt)}
+            />
           </div>
         )}
       </div>
