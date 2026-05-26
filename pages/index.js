@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { CATEGORY_OPTIONS, TYPE_OPTIONS, WORKMODE_OPTIONS } from "../lib/constants";
+import { formatWorkaHiveDateTime } from "../lib/date-format";
 
 export default function Home() {
   const [jobs, setJobs] = useState([]);
@@ -245,7 +246,7 @@ export default function Home() {
             <p>{job.company?.name || "Unknown Company"}</p>
 
             <p className="muted small">
-              Posted: <b>{formatDateTime(job.createdAt)}</b>
+              Posted: <b>{formatWorkaHiveDateTime(job.createdAt)}</b>
             </p>
             {job.location && <p>Location: {job.location}</p>}
             {job.type && <p>Type: {job.type}</p>}

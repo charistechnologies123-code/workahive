@@ -1,16 +1,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { formatWorkaHiveDateTime } from "../../lib/date-format";
 
 function stripHtml(value) {
   return String(value || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-}
-
-function formatDateTime(value) {
-  if (!value) return "—";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleString();
 }
 
 export default function BlogPage() {
@@ -123,7 +117,7 @@ export default function BlogPage() {
             return (
               <article key={post.id} className="blog-card">
                 <p className="muted small">
-                  Posted: {formatDateTime(post.publishedAt || post.createdAt)}
+                  Posted: {formatWorkaHiveDateTime(post.publishedAt || post.createdAt)}
                 </p>
                 <h2>{post.title}</h2>
                 <p>{post.excerpt || `${stripHtml(post.content).slice(0, 180)}${stripHtml(post.content).length > 180 ? "..." : ""}`}</p>
@@ -136,7 +130,7 @@ export default function BlogPage() {
                   {comments.map((comment) => (
                     <div key={comment.id} style={{ borderTop: "1px solid #e5e7eb", paddingTop: 10, marginTop: 10 }}>
                       <p style={{ margin: "0 0 4px" }}>
-                        <b>{comment.user?.name || "User"}</b> <span className="muted small">({formatDateTime(comment.createdAt)})</span>
+                        <b>{comment.user?.name || "User"}</b> <span className="muted small">({formatWorkaHiveDateTime(comment.createdAt)})</span>
                       </p>
                       <p style={{ margin: 0 }}>{comment.body}</p>
                       {me?.role === "ADMIN" && (
@@ -154,7 +148,7 @@ export default function BlogPage() {
                       {(comment.replies || []).map((reply) => (
                         <div key={reply.id} style={{ marginTop: 8, marginLeft: 12, paddingLeft: 10, borderLeft: "2px solid #e5e7eb" }}>
                           <p style={{ margin: "0 0 4px" }}>
-                            <b>{reply.user?.name || "Admin"}</b> <span className="muted small">({formatDateTime(reply.createdAt)})</span>
+                            <b>{reply.user?.name || "Admin"}</b> <span className="muted small">({formatWorkaHiveDateTime(reply.createdAt)})</span>
                           </p>
                           <p style={{ margin: 0 }}>{reply.body}</p>
                           {me?.role === "ADMIN" && (

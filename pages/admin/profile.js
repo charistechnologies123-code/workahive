@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { formatWorkaHiveDate } from "../../lib/date-format";
 
 function EyeIcon() {
   return (
@@ -60,13 +61,6 @@ export default function AdminProfile() {
   });
   const [testEmail, setTestEmail] = useState("");
   const [sendingTestEmail, setSendingTestEmail] = useState(false);
-
-  const formatDateTime = (value) => {
-    if (!value) return "";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "";
-    return date.toLocaleString();
-  };
 
   const load = async () => {
     setLoading(true);
@@ -223,7 +217,7 @@ export default function AdminProfile() {
 
           <div className="field">
             <label>Joined WorkaHive</label>
-            <input value={formatDateTime(me?.createdAt)} readOnly />
+            <input value={formatWorkaHiveDate(me?.createdAt)} readOnly />
           </div>
 
           <button className="btn-primary" type="submit">

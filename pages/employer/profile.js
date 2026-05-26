@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import ReferralsSection from "../../components/ReferralsSection";
+import { formatWorkaHiveDate } from "../../lib/date-format";
 
 function CoinIcon() {
   return (
@@ -22,13 +23,6 @@ function Field({ label, value, multiline = false }) {
       )}
     </div>
   );
-}
-
-function formatDateTime(value) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleString();
 }
 
 function SocialLinkRow({ label, href }) {
@@ -255,7 +249,7 @@ export default function EmployerProfilePage() {
 
             <Field
               label="Joined WorkaHive"
-              value={formatDateTime(me.createdAt)}
+              value={formatWorkaHiveDate(me.createdAt)}
             />
           </div>
         )}

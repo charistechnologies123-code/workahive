@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { useConfirmDialog } from "../ConfirmDialog";
+import { formatWorkaHiveDate } from "../../lib/date-format";
 
 function ReadOnlyField({ label, value, multiline = false }) {
   return (
@@ -613,7 +614,7 @@ export function CompaniesSection() {
                           <div>
                             <p className="job-title">{job.title || "—"}</p>
                             <p className="muted small">
-                              {job.status || "—"} • {job.createdAt ? new Date(job.createdAt).toLocaleDateString() : "—"}
+                              {job.status || "—"} • {formatWorkaHiveDate(job.createdAt)}
                             </p>
                           </div>
                         </div>

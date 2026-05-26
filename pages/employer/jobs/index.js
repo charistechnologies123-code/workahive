@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { useAuth } from "../../../context/AuthContext";
+import { formatWorkaHiveDateTime } from "../../../lib/date-format";
 
 function formatStatus(status) {
   const s = String(status || "").toUpperCase();
@@ -15,13 +16,6 @@ function formatWorkMode(workMode) {
   if (x === "HYBRID") return "Hybrid";
   if (x === "ONSITE") return "On-site";
   return "—";
-}
-
-function formatDate(value) {
-  if (!value) return "—";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleString();
 }
 
 export default function EmployerJobsPage() {
@@ -215,7 +209,7 @@ export default function EmployerJobsPage() {
 
                       <p className="muted small" style={{ marginTop: 6, marginBottom: 0 }}>
                         Applicants: <b>{applicantsCount}</b> • Posted:{" "}
-                        <b>{formatDate(job.createdAt)}</b>
+                        <b>{formatWorkaHiveDateTime(job.createdAt)}</b>
                       </p>
 
                       {Array.isArray(job.applicationFields) &&

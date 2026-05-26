@@ -2,6 +2,7 @@ import { useRouter } from "next/router";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { formatWorkaHiveDate, formatWorkaHiveDateTime } from "../../lib/date-format";
 
 function normalizeFieldType(type) {
   const value = String(type || "").toUpperCase();
@@ -14,20 +15,6 @@ function normalizeFieldType(type) {
   if (value === "NUMBER") return "NUMBER";
   if (value === "DATE") return "DATE";
   return "TEXT";
-}
-
-function formatDate(value) {
-  if (!value) return "—";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleDateString();
-}
-
-function formatDateTime(value) {
-  if (!value) return "—";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleString();
 }
 
 export default function JobDetail() {
@@ -411,10 +398,10 @@ export default function JobDetail() {
               Applicants: <b>{job.applicantsCount}</b>
             </p>
             <p className="muted small" style={{ margin: 0 }}>
-              Posted: <b>{formatDateTime(job.createdAt)}</b>
+              Posted: <b>{formatWorkaHiveDateTime(job.createdAt)}</b>
             </p>
             <p className="muted small" style={{ margin: 0 }}>
-              Salary: <b>{job.salary || "—"}</b> • Deadline: <b>{formatDate(job.applicationDeadline)}</b>
+              Salary: <b>{job.salary || "—"}</b> • Deadline: <b>{formatWorkaHiveDate(job.applicationDeadline)}</b>
             </p>
           </div>
 

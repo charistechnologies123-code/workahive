@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import ReferralsSection from "../../components/ReferralsSection";
+import { formatWorkaHiveDate } from "../../lib/date-format";
 
 function Field({ label, value }) {
   return (
@@ -10,13 +11,6 @@ function Field({ label, value }) {
       <input value={value || ""} readOnly />
     </div>
   );
-}
-
-function formatDateTime(value) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleString();
 }
 
 export default function JobSeekerProfilePage() {
@@ -191,7 +185,7 @@ export default function JobSeekerProfilePage() {
 
             <Field
               label="Joined WorkaHive"
-              value={formatDateTime(me.createdAt)}
+              value={formatWorkaHiveDate(me.createdAt)}
             />
           </div>
         )}

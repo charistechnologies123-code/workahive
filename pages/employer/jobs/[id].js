@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import RichTextEditor from "../../../components/RichTextEditor";
+import { formatWorkaHiveDateTime } from "../../../lib/date-format";
 import {
   CATEGORY_OPTIONS,
   TYPE_OPTIONS,
@@ -292,7 +293,7 @@ export default function EmployerJobManage() {
               Applicants: <b>{applicantsCount}</b>
             </p>
             <p className="muted small" style={{ marginTop: 6 }}>
-              Posted: {job.createdAt ? new Date(job.createdAt).toLocaleString() : "—"}
+      Posted: {formatWorkaHiveDateTime(job.createdAt)}
             </p>
           </div>
 
