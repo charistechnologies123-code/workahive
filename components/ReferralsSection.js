@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { formatWorkaHiveDate } from "../lib/date-format";
 
 function ReferredUserCard({ referral }) {
   return (
@@ -7,7 +8,7 @@ function ReferredUserCard({ referral }) {
       <div className="card-head">
         <h3>{referral.name || referral.email}</h3>
         <p className="muted small">
-          Role: {referral.role} • Joined {new Date(referral.createdAt).toLocaleDateString()}
+          Role: {referral.role} • Joined {formatWorkaHiveDate(referral.createdAt)}
         </p>
       </div>
 
@@ -43,7 +44,7 @@ function ReferredUserCard({ referral }) {
                   <p className="muted small">{activity.description}</p>
                 </div>
                 <span className="muted small">
-                  {new Date(activity.createdAt).toLocaleDateString()}
+                  {formatWorkaHiveDate(activity.createdAt)}
                 </span>
               </div>
             ))}

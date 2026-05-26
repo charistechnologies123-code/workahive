@@ -2,6 +2,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect, useRef } from "react";
+import { formatWorkaHiveDate } from "../lib/date-format";
 
 export default function Navbar() {
   const router = useRouter();
@@ -305,7 +306,7 @@ export default function Navbar() {
                               <div className="notification-title">{notification.title}</div>
                               <div className="notification-message">{notification.message}</div>
                               <div className="notification-time">
-                                {new Date(notification.createdAt).toLocaleDateString()}
+                                {formatWorkaHiveDate(notification.createdAt)}
                               </div>
                             </div>
                             <button
