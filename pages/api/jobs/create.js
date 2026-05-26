@@ -122,14 +122,19 @@ const sanitizeApplicationFields = (input) => {
     throw new Error("Application fields must be an array.");
   }
 
-  return input.map((field, index) => {
+  return input
+  .map((field, index) => {
     const label = normalizeSpaces(field?.label);
     const placeholder = normalizeSpaces(field?.placeholder);
     const type = normalizeSpaces(field?.type)?.toUpperCase() || "TEXT";
-    const required = Boolean(field?.required);
+    const hasAnyContent = Boolean(label || placeholder);
+
+    if (!hasAnyContent) {
+      return null;
+    }
 
     if (!label) {
-      throw new Error(`Application field ${index + 1} must have a label.`);
+      throw new Error(`Application field ${index + 1} must have a question label.`);
     }
 
     if (!ALLOWED_APPLICATION_FIELD_TYPES.includes(type)) {
@@ -141,10 +146,20 @@ const sanitizeApplicationFields = (input) => {
     return {
       label,
       type,
-      required,
+      required: true,
       placeholder: placeholder || "",
     };
-  });
+  })
+  .filter(Boolean);
+};
+
+const parseApplicationDeadline = (value) => {
+  if (value == null || value === "") return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new Error("Application deadline must be a valid date.");
+  }
+  return date;
 };
 
 export default requireAuth(
@@ -172,10 +187,13 @@ const description = sanitizeRichText(raw.description);
     const type = canonicalFromList(raw.type, CANONICAL_TYPES);
     const workMode = canonicalWorkMode(raw.workMode);
     const locationInput = normalizeSpaces(raw.location);
+    const salary = normalizeSpaces(raw.salary);
+    let applicationDeadline = null;
 
     let applicationFields = [];
     try {
       applicationFields = sanitizeApplicationFields(raw.applicationFields);
+      applicationDeadline = parseApplicationDeadline(raw.applicationDeadline);
     } catch (err) {
       return res.status(400).json({ error: err.message || "Invalid application fields" });
     }
@@ -250,6 +268,8 @@ const description = sanitizeRichText(raw.description);
             description,
             category,
             type,
+            salary,
+            applicationDeadline,
             location: canonicalLocation,
             workMode,
             status: "OPEN",

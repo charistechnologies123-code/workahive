@@ -3,6 +3,40 @@ import { useRouter } from "next/router";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect, useRef } from "react";
 
+function SupportIcon({ size = 18 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M4 13a8 8 0 1 1 16 0v3a2 2 0 0 1-2 2h-2v-6h4"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M4 18h2v-6H2v4a2 2 0 0 0 2 2Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9 18a3 3 0 0 0 3 3h2"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <rect x="12.5" y="19.5" width="4" height="3" rx="1.5" stroke="currentColor" strokeWidth="2" />
+    </svg>
+  );
+}
+
 export default function Navbar() {
   const router = useRouter();
   const { user, loading } = useAuth();
@@ -29,14 +63,14 @@ export default function Navbar() {
   useEffect(() => {
     if (user) {
       fetchNotifications();
-      const interval = setInterval(fetchNotifications, 30000); // Poll every 30s
+      const interval = setInterval(fetchNotifications, 30000);
       return () => clearInterval(interval);
     }
   }, [user]);
 
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (notificationRef.current && !notificationRef.current.contains(e.target)) {
+    const handleClickOutside = (event) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
         setShowNotifications(false);
       }
     };
@@ -46,6 +80,10 @@ export default function Navbar() {
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [showNotifications]);
+
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [router.pathname]);
 
   const markAsRead = async (ids) => {
     try {
@@ -81,10 +119,6 @@ export default function Navbar() {
     router.push("/");
   };
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
   const closeSidebar = () => {
     setSidebarOpen(false);
   };
@@ -98,7 +132,7 @@ export default function Navbar() {
 
   const isAdminDashboard = router.pathname.startsWith("/admin/dashboard");
   const isAdminProfile = router.pathname === "/admin/profile";
-  const isAdminTokens = router.pathname === "/admin/token-plans"; // new
+  const isAdminTokens = router.pathname === "/admin/token-plans";
   const isBlogPage = router.pathname === "/blog" || router.pathname.startsWith("/blog/");
 
   const isJobseekerProfile = router.pathname === "/jobseeker/profile";
@@ -106,27 +140,17 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
-        <div className="sidebar-overlay" onClick={closeSidebar}></div>
-      )}
+      {sidebarOpen && <div className="sidebar-overlay" onClick={closeSidebar}></div>}
 
-      {/* Mobile Sidebar */}
-      <div className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
+      <div className={`sidebar ${sidebarOpen ? "sidebar-open" : ""}`}>
         <div className="sidebar-header">
-          <button className="sidebar-close" onClick={closeSidebar}>
-            ✕
+          <button className="sidebar-close" onClick={closeSidebar} aria-label="Close menu">
+            ×
           </button>
         </div>
         <nav className="sidebar-nav">
-          {/* Role Display */}
-          {!loading && user && (
-            <div className="sidebar-role">
-              {user.role}
-            </div>
-          )}
+          {!loading && user && <div className="sidebar-role">{user.role}</div>}
 
-          {/* Primary Navigation */}
           <Link href="/" className={router.pathname === "/" ? "active" : ""} onClick={closeSidebar}>
             Jobs
           </Link>
@@ -173,51 +197,55 @@ export default function Navbar() {
             </>
           )}
 
-          {/* Secondary Navigation Divider */}
-          {!loading && user && (
-            <div className="sidebar-divider"></div>
-          )}
+          <div className="sidebar-divider"></div>
 
-          {/* Secondary Navigation */}
-          <Link href="/support" className="sidebar-secondary" onClick={closeSidebar}>
-            Support
+          <Link href="/support" className="sidebar-secondary sidebar-support-link" onClick={closeSidebar}>
+            <SupportIcon size={18} />
+            <span>Support</span>
           </Link>
 
-          <a href="https://youtu.be/ud9_Dj894eU?si=ONs8fB4HlkPFSXpP" target="_blank" rel="noopener noreferrer" className="sidebar-secondary" onClick={closeSidebar}>
-            Video Guides
-          </a>
-
-          {/* Logout */}
-          {!loading && user && (
-            <button onClick={() => { logout(); closeSidebar(); }} className="sidebar-logout-btn">
+          {!loading && user ? (
+            <button
+              onClick={() => {
+                logout();
+                closeSidebar();
+              }}
+              className="sidebar-logout-btn"
+            >
               Logout
             </button>
+          ) : (
+            <>
+              <Link href="/login" className="sidebar-secondary" onClick={closeSidebar}>
+                Login
+              </Link>
+              <Link href="/register" className="sidebar-secondary" onClick={closeSidebar}>
+                Register
+              </Link>
+            </>
           )}
         </nav>
       </div>
 
       <header className="nav">
         <div className="nav-inner">
-          
-          {/* LEFT: Logo + Hamburger */}
           <div className="nav-left">
-            <button className="hamburger" onClick={toggleSidebar}>
+            <button className="hamburger" onClick={() => setSidebarOpen((prev) => !prev)} aria-label="Open menu">
               <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+                <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
               </svg>
             </button>
             <Link href="/" className="logo">
-                <img
-                  src="/workahive-logo.png"
-                  alt="WorkaHive"
-                  width={150}
-                  height={50}
-                  loading="eager"
-                />
-              </Link>
+              <img
+                src="/workahive-logo.png"
+                alt="WorkaHive"
+                width={150}
+                height={50}
+                loading="eager"
+              />
+            </Link>
           </div>
 
-          {/* CENTER: Navigation (Desktop only) */}
           <nav className="nav-links">
             <Link href="/" className={router.pathname === "/" ? "active" : ""}>
               Jobs
@@ -266,111 +294,100 @@ export default function Navbar() {
             )}
           </nav>
 
-          {/* RIGHT: Actions */}
           <div className="nav-actions">
+            {!loading && user && (
+              <div className="notification-bell-wrapper" ref={notificationRef}>
+                <button
+                  className="notification-bell"
+                  onClick={() => setShowNotifications((prev) => !prev)}
+                  title={`${unreadCount} unread notifications`}
+                >
+                  <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9m0 0V5a3 3 0 1 0-6 0v3M9 21h6a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z" />
+                  </svg>
+                  {unreadCount > 0 && (
+                    <span className="notification-badge">{unreadCount > 99 ? "99+" : unreadCount}</span>
+                  )}
+                </button>
 
-          {/* Notifications Bell (Desktop only) */}
-          {!loading && user && (
-            <div className="notification-bell-wrapper" ref={notificationRef}>
-              <button
-                className="notification-bell"
-                onClick={() => setShowNotifications(!showNotifications)}
-                title={`${unreadCount} unread notifications`}
-              >
-                <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9m0 0V5a3 3 0 1 0-6 0v3M9 21h6a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z"/>
-                </svg>
-                {unreadCount > 0 && (
-                  <span className="notification-badge">{unreadCount > 99 ? "99+" : unreadCount}</span>
-                )}
-              </button>
+                {showNotifications && (
+                  <div className="notification-dropdown">
+                    <div className="notification-header">
+                      <h3>Notifications</h3>
+                      {unreadCount > 0 && (
+                        <button
+                          className="mark-all-read"
+                          onClick={() => markAsRead(notifications.filter((n) => !n.read).map((n) => n.id))}
+                        >
+                          Mark all as read
+                        </button>
+                      )}
+                    </div>
 
-              {/* Notification Dropdown */}
-              {showNotifications && (
-                <div className="notification-dropdown">
-                  <div className="notification-header">
-                    <h3>Notifications</h3>
-                    {unreadCount > 0 && (
-                      <button
-                        className="mark-all-read"
-                        onClick={() => markAsRead(notifications.filter(n => !n.read).map(n => n.id))}
-                      >
-                        Mark all as read
-                      </button>
+                    {notifications.length === 0 ? (
+                      <div className="notification-empty">
+                        <p>No notifications yet</p>
+                      </div>
+                    ) : (
+                      <div className="notification-list">
+                        {notifications.map((notification) => (
+                          <div
+                            key={notification.id}
+                            className={`notification-item ${!notification.read ? "unread" : ""}`}
+                            onClick={() => !notification.read && markAsRead([notification.id])}
+                          >
+                            <div className="notification-content">
+                              <div className="notification-title">{notification.title}</div>
+                              <div className="notification-message">{notification.message}</div>
+                              <div className="notification-time">
+                                {new Date(notification.createdAt).toLocaleDateString()}
+                              </div>
+                            </div>
+                            <button
+                              className="notification-delete"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                deleteNotification(notification.id);
+                              }}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </div>
+                )}
+              </div>
+            )}
 
-                  {notifications.length === 0 ? (
-                    <div className="notification-empty">
-                      <p>No notifications yet</p>
-                    </div>
-                  ) : (
-                    <div className="notification-list">
-                      {notifications.map((notification) => (
-                        <div
-                          key={notification.id}
-                          className={`notification-item ${!notification.read ? "unread" : ""}`}
-                          onClick={() => !notification.read && markAsRead([notification.id])}
-                        >
-                          <div className="notification-content">
-                            <div className="notification-title">{notification.title}</div>
-                            <div className="notification-message">{notification.message}</div>
-                            <div className="notification-time">
-                              {new Date(notification.createdAt).toLocaleDateString()}
-                            </div>
-                          </div>
-                          <button
-                            className="notification-delete"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteNotification(notification.id);
-                            }}
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+            {!loading && user?.role === "EMPLOYER" && (
+              <div className="nav-token-pill" title="Token balance">
+                <span>{"\u{1FA99}"} {typeof user.tokens === "number" ? user.tokens : 0}</span>
+              </div>
+            )}
 
-          {/* Employer token balance */}
-          {!loading && user?.role === "EMPLOYER" && (
-            <div className="nav-token-pill" title="Token balance">
-              <span>{"\u{1FA99}"} {typeof user.tokens === "number" ? user.tokens : 0}</span>
-            </div>
-          )}
+            <Link href="/support" className="nav-link nav-support-link nav-mobile-hide">
+              <SupportIcon size={16} />
+              <span>Support</span>
+            </Link>
 
-          {/* Support */}
-          <Link href="/support" className="nav-link">
-            Support
-          </Link>
+            {!loading && user && (
+              <button onClick={logout} className="nav-link desktop-logout nav-mobile-hide">
+                Logout
+              </button>
+            )}
 
-          {/* Video Guides */}
-          <a href="https://youtube.com/playlist?list=PLIHA5XP5J_xPXI8O1vWi8I1v1GGPVqVuD&si=HrsHjnAqjPtxei-O" target="_blank" rel="noopener noreferrer" className="nav-link">
-            Video Guides
-          </a>
-
-          {/* Logout (Desktop only) */}
-          {!loading && user && (
-            <button onClick={logout} className="nav-link desktop-logout">
-              Logout
-            </button>
-          )}
-
-          {!loading && !user && (
-            <>
-              <Link href="/login" className="btn-soft">
-                Login
-              </Link>
-              <Link href="/register" className="btn-primary">
-                Register
-              </Link>
-            </>
-          )}
+            {!loading && !user && (
+              <>
+                <Link href="/login" className="btn-soft nav-mobile-hide">
+                  Login
+                </Link>
+                <Link href="/register" className="btn-primary nav-mobile-hide">
+                  Register
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>

@@ -52,12 +52,6 @@ function runMulter(req, res) {
   });
 }
 
-function normalizeText(value) {
-  if (typeof value !== "string") return null;
-  const v = value.trim();
-  return v.length ? v : null;
-}
-
 function parseCustomAnswers(raw) {
   if (!raw) return null;
 
@@ -79,6 +73,24 @@ function parseCustomAnswers(raw) {
   return null;
 }
 
+function validateCustomAnswers(applicationFields, customAnswers) {
+  const answers = customAnswers && typeof customAnswers === "object" ? customAnswers : {};
+  const fields = Array.isArray(applicationFields) ? applicationFields : [];
+
+  for (let index = 0; index < fields.length; index += 1) {
+    const field = fields[index];
+    const fieldKey = String(field?.id ?? field?.name ?? field?.label ?? index);
+    const fieldLabel = field?.label || `Question ${index + 1}`;
+    const value = answers[fieldKey];
+
+    if (String(value ?? "").trim() === "") {
+      return `${fieldLabel} is required.`;
+    }
+  }
+
+  return null;
+}
+
 async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -89,7 +101,7 @@ async function handler(req, res) {
   try {
     await runMulter(req, res);
 
-    const { jobId, coverLetter, customAnswers } = req.body;
+    const { jobId, customAnswers } = req.body;
 
     const parsedJobId = parseInt(jobId, 10);
     if (!parsedJobId || Number.isNaN(parsedJobId)) {
@@ -164,12 +176,21 @@ async function handler(req, res) {
       return res.status(400).json({ error: err.message || "Invalid custom answers" });
     }
 
+    const customAnswerError = validateCustomAnswers(job.applicationFields, parsedCustomAnswers);
+    if (customAnswerError) {
+      try {
+        fs.unlinkSync(path.join(uploadDir, cvFile.filename));
+      } catch (_) {}
+
+      return res.status(400).json({ error: customAnswerError });
+    }
+
     const application = await prisma.application.create({
       data: {
         jobId: job.id,
         applicantId: applicant.id,
         cvPath: `/uploads/cvs/${cvFile.filename}`,
-        coverLetter: normalizeText(coverLetter),
+        coverLetter: null,
         customAnswers: parsedCustomAnswers,
         status: "APPLIED",
       },

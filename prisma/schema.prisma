@@ -62,6 +62,8 @@ model Job {
   id                Int           @id @default(autoincrement())
   title             String
   description       String
+  salary            String?
+  applicationDeadline DateTime?   @db.Timestamp(6)
   category          String?
   type              String?
   location          String?

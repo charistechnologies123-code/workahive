@@ -16,6 +16,13 @@ function normalizeFieldType(type) {
   return "TEXT";
 }
 
+function formatDate(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString();
+}
+
 export default function JobDetail() {
   const router = useRouter();
   const { id } = router.query;
@@ -27,13 +34,10 @@ export default function JobDetail() {
   const [pageError, setPageError] = useState("");
   const [message, setMessage] = useState("");
 
-  // Apply state
   const [cvFile, setCvFile] = useState(null);
-  const [coverLetter, setCoverLetter] = useState("");
   const [customAnswers, setCustomAnswers] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
-  // Save state
   const [isSaved, setIsSaved] = useState(false);
   const [savingJob, setSavingJob] = useState(false);
 
@@ -90,7 +94,7 @@ export default function JobDetail() {
           normalizeFieldType(field?.type) === "CHECKBOX" ? false : "";
       });
       setCustomAnswers(initialAnswers);
-    } catch (e) {
+    } catch (error) {
       setPageError("Failed to load job");
     } finally {
       setLoading(false);
@@ -99,7 +103,6 @@ export default function JobDetail() {
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const canApply = me?.role === "JOBSEEKER";
@@ -116,20 +119,14 @@ export default function JobDetail() {
       const field = applicationFields[i];
       const fieldKey = String(field?.id ?? field?.name ?? field?.label ?? i);
       const fieldLabel = field?.label || field?.question || `Field ${i + 1}`;
-      const isRequired = Boolean(field?.required);
-      const fieldType = normalizeFieldType(field?.type);
       const value = customAnswers[fieldKey];
 
-      if (!isRequired) continue;
-
-      if (fieldType === "CHECKBOX") {
+      if (normalizeFieldType(field?.type) === "CHECKBOX") {
         if (!value) {
           return `${fieldLabel} is required.`;
         }
-      } else {
-        if (String(value ?? "").trim() === "") {
-          return `${fieldLabel} is required.`;
-        }
+      } else if (String(value ?? "").trim() === "") {
+        return `${fieldLabel} is required.`;
       }
     }
 
@@ -175,8 +172,8 @@ export default function JobDetail() {
     }
   };
 
-  const submitApplication = async (e) => {
-    e.preventDefault();
+  const submitApplication = async (event) => {
+    event.preventDefault();
     setPageError("");
     setMessage("");
 
@@ -202,7 +199,6 @@ export default function JobDetail() {
       const formData = new FormData();
       formData.append("jobId", id);
       formData.append("cv", cvFile);
-      formData.append("coverLetter", coverLetter);
       formData.append("customAnswers", JSON.stringify(customAnswers));
 
       const res = await fetch("/api/applications/apply", {
@@ -222,7 +218,6 @@ export default function JobDetail() {
 
       setMessage("Application submitted successfully.");
       setCvFile(null);
-      setCoverLetter("");
 
       const resetAnswers = {};
       applicationFields.forEach((field, index) => {
@@ -231,8 +226,8 @@ export default function JobDetail() {
           normalizeFieldType(field?.type) === "CHECKBOX" ? false : "";
       });
       setCustomAnswers(resetAnswers);
-    } catch (e) {
-      const errorText = e?.message || "Application failed";
+    } catch (error) {
+      const errorText = error?.message || "Application failed";
       toast.error(errorText);
       setPageError(errorText);
     } finally {
@@ -245,7 +240,7 @@ export default function JobDetail() {
     const fieldKey = String(field?.id ?? field?.name ?? field?.label ?? index);
     const label = field?.label || field?.question || `Question ${index + 1}`;
     const placeholder = field?.placeholder || "";
-    const required = Boolean(field?.required);
+    const required = true;
     const options = Array.isArray(field?.options)
       ? field.options
       : typeof field?.options === "string"
@@ -264,7 +259,7 @@ export default function JobDetail() {
           <textarea
             rows={4}
             value={customAnswers[fieldKey] || ""}
-            onChange={(e) => updateCustomAnswer(fieldKey, e.target.value)}
+            onChange={(event) => updateCustomAnswer(fieldKey, event.target.value)}
             placeholder={placeholder}
             required={required}
           />
@@ -280,7 +275,7 @@ export default function JobDetail() {
           </label>
           <select
             value={customAnswers[fieldKey] || ""}
-            onChange={(e) => updateCustomAnswer(fieldKey, e.target.value)}
+            onChange={(event) => updateCustomAnswer(fieldKey, event.target.value)}
             required={required}
           >
             <option value="">Select an option</option>
@@ -316,7 +311,7 @@ export default function JobDetail() {
                   name={fieldKey}
                   value={option}
                   checked={customAnswers[fieldKey] === option}
-                  onChange={(e) => updateCustomAnswer(fieldKey, e.target.value)}
+                  onChange={(event) => updateCustomAnswer(fieldKey, event.target.value)}
                   required={required && !customAnswers[fieldKey]}
                 />
                 <span>{option}</span>
@@ -336,7 +331,7 @@ export default function JobDetail() {
             <input
               type="checkbox"
               checked={Boolean(customAnswers[fieldKey])}
-              onChange={(e) => updateCustomAnswer(fieldKey, e.target.checked)}
+              onChange={(event) => updateCustomAnswer(fieldKey, event.target.checked)}
               required={required}
             />
             <span>
@@ -360,7 +355,7 @@ export default function JobDetail() {
         <input
           type={inputType}
           value={customAnswers[fieldKey] || ""}
-          onChange={(e) => updateCustomAnswer(fieldKey, e.target.value)}
+          onChange={(event) => updateCustomAnswer(fieldKey, event.target.value)}
           placeholder={placeholder}
           required={required}
         />
@@ -408,6 +403,9 @@ export default function JobDetail() {
             <p className="muted small" style={{ margin: 0 }}>
               Applicants: <b>{job.applicantsCount}</b>
             </p>
+            <p className="muted small" style={{ margin: 0 }}>
+              Salary: <b>{job.salary || "—"}</b> • Deadline: <b>{formatDate(job.applicationDeadline)}</b>
+            </p>
           </div>
 
           <div style={{ marginTop: 12 }}>
@@ -433,7 +431,11 @@ export default function JobDetail() {
       <div className="card">
         <div className="card-head">
           <h2>Apply</h2>
-          <p className="muted">Only logged-in Job Seekers can apply.</p>
+          <p className="muted">
+            {canApply
+              ? "Submit your CV and complete any required application questions."
+              : "Log in as a Job Seeker to apply for this role."}
+          </p>
         </div>
 
         {!me && (
@@ -474,17 +476,8 @@ export default function JobDetail() {
                 <input
                   type="file"
                   accept=".pdf,.doc,.docx"
-                  onChange={(e) => setCvFile(e.target.files?.[0] || null)}
+                  onChange={(event) => setCvFile(event.target.files?.[0] || null)}
                   required
-                />
-              </div>
-
-              <div className="field">
-                <label>Cover Letter (optional)</label>
-                <textarea
-                  value={coverLetter}
-                  onChange={(e) => setCoverLetter(e.target.value)}
-                  rows={4}
                 />
               </div>
 

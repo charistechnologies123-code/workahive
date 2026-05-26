@@ -308,7 +308,10 @@ export default function JobSeekerMyJobsPage() {
                     )}
 
                     {item.interactionStatus === "SAVED" && (
-                      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
+                      <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, flexWrap: "wrap", marginTop: 12 }}>
+                        <Link href={`/job/${item.jobId}`} className="btn-primary">
+                          Apply
+                        </Link>
                         <button
                           type="button"
                           className="btn-soft"

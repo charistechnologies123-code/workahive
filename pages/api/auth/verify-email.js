@@ -44,11 +44,13 @@ export default async function handler(req, res) {
       userName: updated.name,
       role: updated.role,
     });
-    await sendWelcomeEmail({
-      email: updated.email,
-      name: updated.name,
-      role: updated.role,
-    });
+    if (updated.role !== "ADMIN") {
+      await sendWelcomeEmail({
+        email: updated.email,
+        name: updated.name,
+        role: updated.role,
+      });
+    }
   } catch (error) {
     console.error("Post-verification welcome flow failed:", error);
   }

@@ -20,7 +20,6 @@ function createEmptyApplicationField() {
   return {
     label: "",
     type: "TEXT",
-    required: true,
     placeholder: "",
   };
 }
@@ -43,6 +42,8 @@ export default function EmployerJobManage() {
   const [form, setForm] = useState({
     title: "",
     description: "",
+    salary: "",
+    applicationDeadline: "",
     categoryPreset: "",
     categoryOther: "",
     typePreset: "",
@@ -96,6 +97,8 @@ export default function EmployerJobManage() {
       setForm({
         title: data.title || "",
         description: data.description || "",
+        salary: data.salary || "",
+        applicationDeadline: data.applicationDeadline ? new Date(data.applicationDeadline).toISOString().slice(0, 10) : "",
         categoryPreset: incomingCategory
           ? categoryIsPreset
             ? incomingCategory
@@ -113,7 +116,6 @@ export default function EmployerJobManage() {
         applicationFields: incomingApplicationFields.map((field) => ({
           label: field?.label || "",
           type: field?.type || "TEXT",
-          required: Boolean(field?.required),
           placeholder: field?.placeholder || "",
         })),
       });
@@ -159,19 +161,9 @@ export default function EmployerJobManage() {
       .map((field) => ({
         label: (field.label || "").trim(),
         type: field.type || "TEXT",
-        required: Boolean(field.required),
         placeholder: (field.placeholder || "").trim(),
       }))
       .filter((field) => field.label);
-
-    const hasInvalidField = (form.applicationFields || []).some(
-      (field) => !(field.label || "").trim()
-    );
-
-    if (hasInvalidField) {
-      toast.error("Every custom application question must have a label.");
-      return;
-    }
 
     setSaving(true);
 
@@ -179,6 +171,8 @@ export default function EmployerJobManage() {
       const payload = {
         title: form.title,
         description: form.description,
+        salary: form.salary || null,
+        applicationDeadline: form.applicationDeadline || null,
         category: finalCategory || null,
         type: finalType || null,
         workMode: form.workMode || null,
@@ -452,6 +446,26 @@ export default function EmployerJobManage() {
 
           <div className="grid-2">
             <div className="field">
+              <label>Salary</label>
+              <input
+                value={form.salary}
+                onChange={(e) => setForm((prev) => ({ ...prev, salary: e.target.value }))}
+                placeholder="e.g. NGN 250,000 - NGN 400,000 / month"
+              />
+            </div>
+
+            <div className="field">
+              <label>Application Deadline</label>
+              <input
+                type="date"
+                value={form.applicationDeadline}
+                onChange={(e) => setForm((prev) => ({ ...prev, applicationDeadline: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <div className="grid-2">
+            <div className="field">
               <label>Category</label>
               <select
                 value={form.categoryPreset}
@@ -564,7 +578,7 @@ export default function EmployerJobManage() {
                 <h3 style={{ margin: 0 }}>Custom Application Questions</h3>
                 <p className="muted small" style={{ marginTop: 6 }}>
                   Edit the extra questions applicants must answer before
-                  submitting.
+                  submitting. Need a cover letter? Add a long-text question asking for one.
                 </p>
               </div>
 
@@ -607,10 +621,11 @@ export default function EmployerJobManage() {
 
                       <button
                         type="button"
-                        className="btn-soft"
+                        className="question-remove-btn"
+                        aria-label={`Remove question ${index + 1}`}
                         onClick={() => removeApplicationField(index)}
                       >
-                        Remove
+                        ×
                       </button>
                     </div>
 
@@ -621,7 +636,7 @@ export default function EmployerJobManage() {
                         onChange={(e) =>
                           updateApplicationField(index, { label: e.target.value })
                         }
-                        placeholder="e.g. Tell us why you are a great fit for this role"
+                        placeholder="e.g. Share your cover letter or tell us why you are a great fit"
                       />
                     </div>
 
@@ -654,29 +669,6 @@ export default function EmployerJobManage() {
                           placeholder="e.g. Paste your portfolio URL"
                         />
                       </div>
-                    </div>
-
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        marginTop: 6,
-                      }}
-                    >
-                      <input
-                        id={`required-${index}`}
-                        type="checkbox"
-                        checked={field.required}
-                        onChange={(e) =>
-                          updateApplicationField(index, {
-                            required: e.target.checked,
-                          })
-                        }
-                      />
-                      <label htmlFor={`required-${index}`} style={{ margin: 0 }}>
-                        Required field
-                      </label>
                     </div>
                   </div>
                 ))}

@@ -22,7 +22,7 @@ const APPLICATION_FIELD_TYPES = [
 ];
 
 function createEmptyApplicationField() {
-  return { label: "", type: "TEXT", required: true, placeholder: "" };
+  return { label: "", type: "TEXT", placeholder: "" };
 }
 
 function createEmptySocialField() {
@@ -62,6 +62,8 @@ export default function EmployerDashboard() {
   const [jobForm, setJobForm] = useState({
     title: "",
     description: "",
+    salary: "",
+    applicationDeadline: "",
     category: "",
     type: "",
     workMode: "",
@@ -198,6 +200,8 @@ export default function EmployerDashboard() {
     setJobForm({
       title: "",
       description: "",
+      salary: "",
+      applicationDeadline: "",
       category: "",
       type: "",
       workMode: "",
@@ -227,6 +231,7 @@ export default function EmployerDashboard() {
         </div>
       </div>
 
+      {!company?.verified && (
       <div className="card">
         <div className="card-head">
           <h2>Company</h2>
@@ -339,6 +344,7 @@ export default function EmployerDashboard() {
           </form>
         )}
       </div>
+      )}
 
       <div className="card">
         <div className="card-head">
@@ -358,6 +364,26 @@ export default function EmployerDashboard() {
           <div className="field">
             <label>Description</label>
             <RichTextEditor value={jobForm.description} onChange={(value) => setJobForm((p) => ({ ...p, description: value }))} />
+          </div>
+          <div className="grid-2">
+            <div className="field">
+              <label>Salary</label>
+              <input
+                value={jobForm.salary}
+                onChange={(e) => setJobForm((p) => ({ ...p, salary: e.target.value }))}
+                disabled={!canPostJob}
+                placeholder="e.g. NGN 250,000 - NGN 400,000 / month"
+              />
+            </div>
+            <div className="field">
+              <label>Application Deadline</label>
+              <input
+                type="date"
+                value={jobForm.applicationDeadline}
+                onChange={(e) => setJobForm((p) => ({ ...p, applicationDeadline: e.target.value }))}
+                disabled={!canPostJob}
+              />
+            </div>
           </div>
           <div className="grid-2">
             <div className="field">
@@ -407,7 +433,7 @@ export default function EmployerDashboard() {
           <div className="card">
             <div className="card-head">
               <h3>Custom Application Questions</h3>
-              <p className="muted small">Add optional custom questions for applicants.</p>
+              <p className="muted small">Add optional custom questions for applicants. Need a cover letter? Add a long-text question asking candidates to write one.</p>
             </div>
             <button type="button" className="btn-soft" disabled={!canPostJob} onClick={() => setJobForm((p) => ({ ...p, applicationFields: [...p.applicationFields, createEmptyApplicationField()] }))}>
               Add Question
@@ -415,7 +441,23 @@ export default function EmployerDashboard() {
             <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
               {jobForm.applicationFields.map((field, index) => (
                 <div key={index} className="card" style={{ marginBottom: 0 }}>
-                  <div className="field"><label>Question</label><input value={field.label} onChange={(e) => setJobForm((p) => ({ ...p, applicationFields: p.applicationFields.map((item, i) => i === index ? { ...item, label: e.target.value } : item) }))} /></div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 10 }}>
+                    <strong>Question {index + 1}</strong>
+                    <button
+                      type="button"
+                      className="question-remove-btn"
+                      aria-label={`Remove question ${index + 1}`}
+                      onClick={() =>
+                        setJobForm((p) => ({
+                          ...p,
+                          applicationFields: p.applicationFields.filter((_, i) => i !== index),
+                        }))
+                      }
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <div className="field"><label>Question</label><input value={field.label} onChange={(e) => setJobForm((p) => ({ ...p, applicationFields: p.applicationFields.map((item, i) => i === index ? { ...item, label: e.target.value } : item) }))} placeholder="e.g. Share your cover letter or tell us why you are a great fit" /></div>
                   <div className="grid-2">
                     <div className="field">
                       <label>Type</label>

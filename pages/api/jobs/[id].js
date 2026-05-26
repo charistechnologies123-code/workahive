@@ -86,14 +86,19 @@ const sanitizeApplicationFields = (input) => {
     throw new Error("Application fields must be an array.");
   }
 
-  return input.map((field, index) => {
+  return input
+  .map((field, index) => {
     const label = normalizeSpaces(field?.label);
     const placeholder = normalizeSpaces(field?.placeholder) || "";
     const type = normalizeSpaces(field?.type)?.toUpperCase() || "TEXT";
-    const required = Boolean(field?.required);
+    const hasAnyContent = Boolean(label || placeholder);
+
+    if (!hasAnyContent) {
+      return null;
+    }
 
     if (!label) {
-      throw new Error(`Application field ${index + 1} must have a label.`);
+      throw new Error(`Application field ${index + 1} must have a question label.`);
     }
 
     if (!VALID_APPLICATION_FIELD_TYPES.includes(type)) {
@@ -105,10 +110,20 @@ const sanitizeApplicationFields = (input) => {
     return {
       label,
       type,
-      required,
+      required: true,
       placeholder,
     };
-  });
+  })
+  .filter(Boolean);
+};
+
+const parseApplicationDeadline = (value) => {
+  if (value == null || value === "") return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new Error("Application deadline must be a valid date.");
+  }
+  return date;
 };
 
 export default async function handler(req, res) {
@@ -199,6 +214,8 @@ export default async function handler(req, res) {
         description,
         category,
         type,
+        salary,
+        applicationDeadline,
         location,
         workMode,
         status,
@@ -229,6 +246,10 @@ export default async function handler(req, res) {
 
       if (type !== undefined) {
         data.type = normalizeSpaces(type);
+      }
+
+      if (salary !== undefined) {
+        data.salary = normalizeSpaces(salary);
       }
 
       if (location !== undefined) {
@@ -263,10 +284,18 @@ export default async function handler(req, res) {
         }
       }
 
+      if (applicationDeadline !== undefined) {
+        try {
+          data.applicationDeadline = parseApplicationDeadline(applicationDeadline);
+        } catch (err) {
+          return res.status(400).json({ error: err.message || "Invalid application deadline" });
+        }
+      }
+
       if (Object.keys(data).length === 0) {
         return res.status(400).json({
           error:
-            "Provide at least one field to update: title, description, category, type, location, workMode, applicationFields, or status",
+            "Provide at least one field to update: title, description, category, type, salary, application deadline, location, workMode, applicationFields, or status",
         });
       }
 

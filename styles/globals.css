@@ -492,6 +492,13 @@ form {
   display: block;
 }
 
+.sidebar-support-link,
+.nav-support-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .sidebar-secondary:hover {
   background: #f3f4f6;
   color: var(--text);
@@ -518,6 +525,9 @@ form {
   font-size: 12px;
   white-space: nowrap;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .nav-link:hover {
@@ -1722,7 +1732,7 @@ form {
 @media (max-width: 768px) {
   .hamburger {
     display: block;
-    margin-left: -8px;
+    margin-left: -12px;
   }
   
   .nav-links {
@@ -1735,16 +1745,30 @@ form {
   
   .nav-left {
     flex: 1;
+    gap: 8px;
   }
   
   .nav-actions {
     flex-wrap: wrap;
     gap: 8px;
   }
+
+  .nav-mobile-hide {
+    display: none !important;
+  }
   
   /* Hide logout button on mobile since sidebar handles it */
   .desktop-logout {
     display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .nav-inner {
+    flex-direction: row;
+    align-items: center;
+    padding-left: 10px;
+    padding-right: 12px;
   }
 }
 
@@ -1945,6 +1969,25 @@ form {
 
 .notification-delete:hover {
   color: #ef4444;
+}
+
+.question-remove-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.question-remove-btn:hover {
+  background: #e5e7eb;
 }
 
 /* Responsive notification dropdown */
