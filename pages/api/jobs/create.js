@@ -61,6 +61,7 @@ const CANONICAL_TYPES = [
 ];
 
 const ALLOWED_APPLICATION_FIELD_TYPES = ["TEXT", "TEXTAREA", "URL", "NUMBER"];
+const ALLOWED_APPLICATION_ANSWER_MODES = ["TEXT", "FILE", "TEXT_OR_FILE"];
 
 const normalizeSpaces = (v) => {
   if (typeof v !== "string") return null;
@@ -127,6 +128,7 @@ const sanitizeApplicationFields = (input) => {
     const label = normalizeSpaces(field?.label);
     const placeholder = normalizeSpaces(field?.placeholder);
     const type = normalizeSpaces(field?.type)?.toUpperCase() || "TEXT";
+    const answerMode = normalizeSpaces(field?.answerMode || field?.responseMode || field?.mode)?.toUpperCase() || "TEXT";
     const hasAnyContent = Boolean(label || placeholder);
 
     if (!hasAnyContent) {
@@ -143,9 +145,16 @@ const sanitizeApplicationFields = (input) => {
       );
     }
 
+    if (!ALLOWED_APPLICATION_ANSWER_MODES.includes(answerMode)) {
+      throw new Error(
+        `Application field ${index + 1} has invalid answer mode. Allowed modes: ${ALLOWED_APPLICATION_ANSWER_MODES.join(", ")}`
+      );
+    }
+
     return {
       label,
       type,
+      answerMode,
       required: true,
       placeholder: placeholder || "",
     };

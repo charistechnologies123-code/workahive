@@ -17,6 +17,17 @@ function normalizeFieldType(type) {
   return "TEXT";
 }
 
+function normalizeAnswerMode(mode) {
+  const value = String(mode || "").toUpperCase();
+  if (value === "FILE") return "FILE";
+  if (value === "TEXT_OR_FILE") return "TEXT_OR_FILE";
+  return "TEXT";
+}
+
+function getFieldKey(field, index) {
+  return String(field?.id ?? field?.name ?? field?.label ?? index);
+}
+
 export default function JobDetail() {
   const router = useRouter();
   const { id } = router.query;
@@ -30,6 +41,7 @@ export default function JobDetail() {
 
   const [cvFile, setCvFile] = useState(null);
   const [customAnswers, setCustomAnswers] = useState({});
+  const [customAnswerFiles, setCustomAnswerFiles] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
   const [isSaved, setIsSaved] = useState(false);
@@ -83,11 +95,12 @@ export default function JobDetail() {
 
       const initialAnswers = {};
       fields.forEach((field, index) => {
-        const key = String(field?.id ?? field?.name ?? field?.label ?? index);
+        const key = getFieldKey(field, index);
         initialAnswers[key] =
           normalizeFieldType(field?.type) === "CHECKBOX" ? false : "";
       });
       setCustomAnswers(initialAnswers);
+      setCustomAnswerFiles({});
     } catch (error) {
       setPageError("Failed to load job");
     } finally {
@@ -108,12 +121,35 @@ export default function JobDetail() {
     }));
   };
 
+  const updateCustomAnswerFile = (fieldKey, file) => {
+    setCustomAnswerFiles((prev) => ({
+      ...prev,
+      [fieldKey]: file || null,
+    }));
+  };
+
   const validateCustomFields = () => {
     for (let i = 0; i < applicationFields.length; i += 1) {
       const field = applicationFields[i];
-      const fieldKey = String(field?.id ?? field?.name ?? field?.label ?? i);
+      const fieldKey = getFieldKey(field, i);
       const fieldLabel = field?.label || field?.question || `Field ${i + 1}`;
       const value = customAnswers[fieldKey];
+      const file = customAnswerFiles[fieldKey];
+      const answerMode = normalizeAnswerMode(field?.answerMode || field?.responseMode || field?.mode);
+
+      if (answerMode === "FILE") {
+        if (!file) {
+          return `${fieldLabel} requires a file upload.`;
+        }
+        continue;
+      }
+
+      if (answerMode === "TEXT_OR_FILE") {
+        if (String(value ?? "").trim() === "" && !file) {
+          return `${fieldLabel} requires a typed response or a file upload.`;
+        }
+        continue;
+      }
 
       if (normalizeFieldType(field?.type) === "CHECKBOX") {
         if (!value) {
@@ -195,6 +231,12 @@ export default function JobDetail() {
       formData.append("cv", cvFile);
       formData.append("customAnswers", JSON.stringify(customAnswers));
 
+      Object.entries(customAnswerFiles).forEach(([fieldKey, file]) => {
+        if (file) {
+          formData.append(`customFile_${fieldKey}`, file);
+        }
+      });
+
       const res = await fetch("/api/applications/apply", {
         method: "POST",
         credentials: "include",
@@ -212,10 +254,11 @@ export default function JobDetail() {
 
       setMessage("Application submitted successfully.");
       setCvFile(null);
+      setCustomAnswerFiles({});
 
       const resetAnswers = {};
       applicationFields.forEach((field, index) => {
-        const key = String(field?.id ?? field?.name ?? field?.label ?? index);
+        const key = getFieldKey(field, index);
         resetAnswers[key] =
           normalizeFieldType(field?.type) === "CHECKBOX" ? false : "";
       });
@@ -231,9 +274,10 @@ export default function JobDetail() {
 
   const renderCustomField = (field, index) => {
     const fieldType = normalizeFieldType(field?.type);
-    const fieldKey = String(field?.id ?? field?.name ?? field?.label ?? index);
+    const fieldKey = getFieldKey(field, index);
     const label = field?.label || field?.question || `Question ${index + 1}`;
     const placeholder = field?.placeholder || "";
+    const answerMode = normalizeAnswerMode(field?.answerMode || field?.responseMode || field?.mode);
     const required = true;
     const options = Array.isArray(field?.options)
       ? field.options
@@ -243,20 +287,155 @@ export default function JobDetail() {
           .map((item) => item.trim())
           .filter(Boolean)
       : [];
+    const fileValue = customAnswerFiles[fieldKey];
+    const fileHint = "Max 5MB. PDF, DOC, DOCX or similar document files.";
 
-    if (fieldType === "TEXTAREA") {
+    const renderFileInput = () => (
+      <div className="field" style={{ marginTop: 8 }}>
+        <label>Upload file {required ? "*" : ""}</label>
+        <input
+          type="file"
+          accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.txt"
+          onChange={(event) => updateCustomAnswerFile(fieldKey, event.target.files?.[0] || null)}
+          required={required && answerMode === "FILE" && !fileValue}
+        />
+        <p className="muted small" style={{ margin: 0 }}>
+          {fileHint}
+        </p>
+        {fileValue?.name && (
+          <p className="muted small" style={{ margin: 0 }}>
+            Selected: <b>{fileValue.name}</b>
+          </p>
+        )}
+      </div>
+    );
+
+    if (answerMode === "FILE") {
       return (
         <div className="field" key={fieldKey}>
           <label>
             {label} {required ? "*" : ""}
           </label>
+          <p className="muted small" style={{ margin: 0 }}>
+            {placeholder || "Upload a file response."}
+          </p>
+          {renderFileInput()}
+        </div>
+      );
+    }
+
+    const textField = () => {
+      if (fieldType === "TEXTAREA") {
+        return (
           <textarea
             rows={4}
             value={customAnswers[fieldKey] || ""}
             onChange={(event) => updateCustomAnswer(fieldKey, event.target.value)}
             placeholder={placeholder}
-            required={required}
+            required={required && answerMode !== "TEXT_OR_FILE"}
           />
+        );
+      }
+
+      if (fieldType === "SELECT") {
+        return (
+          <select
+            value={customAnswers[fieldKey] || ""}
+            onChange={(event) => updateCustomAnswer(fieldKey, event.target.value)}
+            required={required && answerMode !== "TEXT_OR_FILE"}
+          >
+            <option value="">Select an option</option>
+            {options.map((option, optionIndex) => (
+              <option key={`${fieldKey}-${optionIndex}`} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        );
+      }
+
+      if (fieldType === "RADIO") {
+        return (
+          <div style={{ display: "grid", gap: 10 }}>
+            {options.map((option, optionIndex) => (
+              <label
+                key={`${fieldKey}-${optionIndex}`}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  fontWeight: 400,
+                }}
+              >
+                <input
+                  type="radio"
+                  name={fieldKey}
+                  value={option}
+                  checked={customAnswers[fieldKey] === option}
+                  onChange={(event) => updateCustomAnswer(fieldKey, event.target.value)}
+                  required={required && !customAnswers[fieldKey] && answerMode !== "TEXT_OR_FILE"}
+                />
+                <span>{option}</span>
+              </label>
+            ))}
+          </div>
+        );
+      }
+
+      if (fieldType === "CHECKBOX") {
+        return (
+          <label
+            style={{ display: "flex", alignItems: "center", gap: 10, fontWeight: 400 }}
+          >
+            <input
+              type="checkbox"
+              checked={Boolean(customAnswers[fieldKey])}
+              onChange={(event) => updateCustomAnswer(fieldKey, event.target.checked)}
+              required={required && answerMode !== "TEXT_OR_FILE"}
+            />
+            <span>
+              {label} {required ? "*" : ""}
+            </span>
+          </label>
+        );
+      }
+
+      let inputType = "text";
+      if (fieldType === "EMAIL") inputType = "email";
+      if (fieldType === "NUMBER") inputType = "number";
+      if (fieldType === "DATE") inputType = "date";
+
+      return (
+        <input
+          type={inputType}
+          value={customAnswers[fieldKey] || ""}
+          onChange={(event) => updateCustomAnswer(fieldKey, event.target.value)}
+          placeholder={placeholder}
+          required={required && answerMode !== "TEXT_OR_FILE"}
+        />
+      );
+    };
+
+    if (answerMode === "TEXT_OR_FILE") {
+      return (
+        <div className="field" key={fieldKey}>
+          <label>
+            {label} {required ? "*" : ""}
+          </label>
+          {fieldType === "TEXTAREA" ? (
+            <textarea
+              rows={4}
+              value={customAnswers[fieldKey] || ""}
+              onChange={(event) => updateCustomAnswer(fieldKey, event.target.value)}
+              placeholder={placeholder}
+            />
+          ) : (
+            textField()
+          )}
+          <p className="muted small" style={{ margin: 0 }}>
+            You can type a response or upload a file.
+          </p>
+          {renderFileInput()}
         </div>
       );
     }
@@ -283,76 +462,12 @@ export default function JobDetail() {
       );
     }
 
-    if (fieldType === "RADIO") {
-      return (
-        <div className="field" key={fieldKey}>
-          <label>
-            {label} {required ? "*" : ""}
-          </label>
-          <div style={{ display: "grid", gap: 10 }}>
-            {options.map((option, optionIndex) => (
-              <label
-                key={`${fieldKey}-${optionIndex}`}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  fontWeight: 400,
-                }}
-              >
-                <input
-                  type="radio"
-                  name={fieldKey}
-                  value={option}
-                  checked={customAnswers[fieldKey] === option}
-                  onChange={(event) => updateCustomAnswer(fieldKey, event.target.value)}
-                  required={required && !customAnswers[fieldKey]}
-                />
-                <span>{option}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    if (fieldType === "CHECKBOX") {
-      return (
-        <div className="field" key={fieldKey}>
-          <label
-            style={{ display: "flex", alignItems: "center", gap: 10, fontWeight: 400 }}
-          >
-            <input
-              type="checkbox"
-              checked={Boolean(customAnswers[fieldKey])}
-              onChange={(event) => updateCustomAnswer(fieldKey, event.target.checked)}
-              required={required}
-            />
-            <span>
-              {label} {required ? "*" : ""}
-            </span>
-          </label>
-        </div>
-      );
-    }
-
-    let inputType = "text";
-    if (fieldType === "EMAIL") inputType = "email";
-    if (fieldType === "NUMBER") inputType = "number";
-    if (fieldType === "DATE") inputType = "date";
-
     return (
       <div className="field" key={fieldKey}>
         <label>
           {label} {required ? "*" : ""}
         </label>
-        <input
-          type={inputType}
-          value={customAnswers[fieldKey] || ""}
-          onChange={(event) => updateCustomAnswer(fieldKey, event.target.value)}
-          placeholder={placeholder}
-          required={required}
-        />
+        {textField()}
       </div>
     );
   };
@@ -469,7 +584,7 @@ export default function JobDetail() {
 
             <form onSubmit={submitApplication} className="form">
               <div className="field">
-                <label>CV (PDF/DOC) *</label>
+                <label>CV (PDF/DOC, max 5MB) *</label>
                 <input
                   type="file"
                   accept=".pdf,.doc,.docx"

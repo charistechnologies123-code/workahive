@@ -17,11 +17,18 @@ const APPLICATION_FIELD_TYPES = [
   { label: "Number", value: "NUMBER" },
 ];
 
+const APPLICATION_ANSWER_MODES = [
+  { label: "Type only", value: "TEXT" },
+  { label: "Upload file only", value: "FILE" },
+  { label: "Type or upload", value: "TEXT_OR_FILE" },
+];
+
 function createEmptyApplicationField() {
   return {
     label: "",
     type: "TEXT",
     placeholder: "",
+    answerMode: "TEXT",
   };
 }
 
@@ -118,6 +125,7 @@ export default function EmployerJobManage() {
           label: field?.label || "",
           type: field?.type || "TEXT",
           placeholder: field?.placeholder || "",
+          answerMode: field?.answerMode || field?.responseMode || field?.mode || "TEXT",
         })),
       });
     } catch {
@@ -163,6 +171,7 @@ export default function EmployerJobManage() {
         label: (field.label || "").trim(),
         type: field.type || "TEXT",
         placeholder: (field.placeholder || "").trim(),
+        answerMode: field.answerMode || "TEXT",
       }))
       .filter((field) => field.label);
 
@@ -575,13 +584,14 @@ export default function EmployerJobManage() {
                 flexWrap: "wrap",
               }}
             >
-              <div>
-                <h3 style={{ margin: 0 }}>Custom Application Questions</h3>
-                <p className="muted small" style={{ marginTop: 6 }}>
-                  Edit the extra questions applicants must answer before
-                  submitting. Need a cover letter? Add a long-text question asking for one.
-                </p>
-              </div>
+                <div>
+                  <h3 style={{ margin: 0 }}>Custom Application Questions</h3>
+                  <p className="muted small" style={{ marginTop: 6 }}>
+                    Edit the extra questions applicants must answer before
+                    submitting. Need a cover letter? Ask for type only,
+                    file only, or allow both text and upload.
+                  </p>
+                </div>
 
               <button
                 type="button"
@@ -653,6 +663,22 @@ export default function EmployerJobManage() {
                           {APPLICATION_FIELD_TYPES.map((type) => (
                             <option key={type.value} value={type.value}>
                               {type.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="field">
+                        <label>Answer Mode</label>
+                        <select
+                          value={field.answerMode || "TEXT"}
+                          onChange={(e) =>
+                            updateApplicationField(index, { answerMode: e.target.value })
+                          }
+                        >
+                          {APPLICATION_ANSWER_MODES.map((mode) => (
+                            <option key={mode.value} value={mode.value}>
+                              {mode.label}
                             </option>
                           ))}
                         </select>

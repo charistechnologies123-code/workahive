@@ -21,8 +21,14 @@ const APPLICATION_FIELD_TYPES = [
   { label: "Number", value: "NUMBER" },
 ];
 
+const APPLICATION_ANSWER_MODES = [
+  { label: "Type only", value: "TEXT" },
+  { label: "Upload file only", value: "FILE" },
+  { label: "Type or upload", value: "TEXT_OR_FILE" },
+];
+
 function createEmptyApplicationField() {
-  return { label: "", type: "TEXT", placeholder: "" };
+  return { label: "", type: "TEXT", placeholder: "", answerMode: "TEXT" };
 }
 
 function createEmptySocialField() {
@@ -431,10 +437,14 @@ export default function EmployerDashboard() {
           </div>
 
           <div className="card">
-            <div className="card-head">
-              <h3>Custom Application Questions</h3>
-              <p className="muted small">Add optional custom questions for applicants. Need a cover letter? Add a long-text question asking candidates to write one.</p>
-            </div>
+                <div className="card-head">
+                  <h3>Custom Application Questions</h3>
+                  <p className="muted small">
+                    Add optional custom questions for applicants. You can ask
+                    for typed answers, file uploads, or either type or upload
+                    for flexible prompts like cover letters.
+                  </p>
+                </div>
             <button type="button" className="btn-soft" disabled={!canPostJob} onClick={() => setJobForm((p) => ({ ...p, applicationFields: [...p.applicationFields, createEmptyApplicationField()] }))}>
               Add Question
             </button>
@@ -463,6 +473,26 @@ export default function EmployerDashboard() {
                       <label>Type</label>
                       <select value={field.type} onChange={(e) => setJobForm((p) => ({ ...p, applicationFields: p.applicationFields.map((item, i) => i === index ? { ...item, type: e.target.value } : item) }))}>
                         {APPLICATION_FIELD_TYPES.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}
+                      </select>
+                    </div>
+                    <div className="field">
+                      <label>Answer Mode</label>
+                      <select
+                        value={field.answerMode || "TEXT"}
+                        onChange={(e) =>
+                          setJobForm((p) => ({
+                            ...p,
+                            applicationFields: p.applicationFields.map((item, i) =>
+                              i === index ? { ...item, answerMode: e.target.value } : item
+                            ),
+                          }))
+                        }
+                      >
+                        {APPLICATION_ANSWER_MODES.map((mode) => (
+                          <option key={mode.value} value={mode.value}>
+                            {mode.label}
+                          </option>
+                        ))}
                       </select>
                     </div>
                     <div className="field"><label>Placeholder</label><input value={field.placeholder} onChange={(e) => setJobForm((p) => ({ ...p, applicationFields: p.applicationFields.map((item, i) => i === index ? { ...item, placeholder: e.target.value } : item) }))} /></div>

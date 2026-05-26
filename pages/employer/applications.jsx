@@ -70,11 +70,34 @@ function renderCustomAnswers(customAnswers) {
             }}
           >
             <p className="muted small" style={{ marginTop: 0 }}>
-              {key}
+              {value?.label || key}
             </p>
-            <p style={{ marginBottom: 0, whiteSpace: "pre-wrap" }}>
-              {typeof value === "string" ? value : JSON.stringify(value)}
-            </p>
+            {value && typeof value === "object" ? (
+              <div style={{ display: "grid", gap: 8 }}>
+                {value.text ? (
+                  <p style={{ marginBottom: 0, whiteSpace: "pre-wrap" }}>{value.text}</p>
+                ) : (
+                  <p className="muted small" style={{ margin: 0 }}>No typed response.</p>
+                )}
+                {value.file?.url ? (
+                  <a
+                    href={value.file.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn-soft"
+                    style={{ width: "fit-content" }}
+                  >
+                    View Attached File
+                  </a>
+                ) : (
+                  <p className="muted small" style={{ margin: 0 }}>No file attached.</p>
+                )}
+              </div>
+            ) : (
+              <p style={{ marginBottom: 0, whiteSpace: "pre-wrap" }}>
+                {typeof value === "string" ? value : JSON.stringify(value)}
+              </p>
+            )}
           </div>
         ))}
       </div>

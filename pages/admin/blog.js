@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import RichTextEditor from "../../components/RichTextEditor";
 import { useConfirmDialog } from "../../components/ConfirmDialog";
+import { formatWorkaHiveDateTime } from "../../lib/date-format";
 
 const emptyForm = {
   id: null,
@@ -35,6 +36,7 @@ export default function AdminBlogPage() {
   const uploadImage = async (file) => {
     const formData = new FormData();
     formData.append("image", file);
+    formData.append("postId", form.id || "draft");
 
     const res = await fetch("/api/admin/blog-upload", {
       method: "POST",
@@ -171,6 +173,9 @@ export default function AdminBlogPage() {
                   <p className="muted small">
                     {post.published ? "Published" : "Draft"} • {post.slug}
                   </p>
+                  <p className="muted small" style={{ marginTop: 6 }}>
+                    Posted: <b>{formatWorkaHiveDateTime(post.publishedAt || post.createdAt)}</b>
+                  </p>
                 </div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <button
@@ -202,3 +207,4 @@ export default function AdminBlogPage() {
     </div>
   );
 }
+

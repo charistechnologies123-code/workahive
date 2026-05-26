@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { EditorContent, Node, useEditor } from "@tiptap/react";
+import { mergeAttributes } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import Link from "@tiptap/extension-link";
@@ -24,6 +25,35 @@ const ImageNode = Node.create({
   },
 });
 
+const EmbedNode = Node.create({
+  name: "embed",
+  group: "block",
+  draggable: true,
+  selectable: true,
+  addAttributes() {
+    return {
+      src: { default: null },
+      title: { default: "Embedded content" },
+      width: { default: "100%" },
+      height: { default: "360" },
+      allow: {
+        default:
+          "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",
+      },
+      allowfullscreen: { default: true },
+      frameborder: { default: "0" },
+      loading: { default: "lazy" },
+      referrerpolicy: { default: "strict-origin-when-cross-origin" },
+    };
+  },
+  parseHTML() {
+    return [{ tag: "iframe[src]" }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ["iframe", mergeAttributes(HTMLAttributes)];
+  },
+});
+
 function MenuButton({ onClick, active, children, disabled }) {
   return (
     <button
@@ -36,6 +66,36 @@ function MenuButton({ onClick, active, children, disabled }) {
       {children}
     </button>
   );
+}
+
+function normalizeEmbedUrl(input) {
+  const value = String(input || "").trim();
+  if (!value) return "";
+
+  try {
+    const url = new URL(value);
+    const host = url.hostname.replace(/^www\./, "").toLowerCase();
+
+    if (host.includes("youtube.com")) {
+      const videoId = url.searchParams.get("v");
+      if (videoId) return `https://www.youtube.com/embed/${videoId}`;
+      if (url.pathname.startsWith("/embed/")) return url.toString();
+    }
+
+    if (host === "youtu.be") {
+      const videoId = url.pathname.split("/").filter(Boolean)[0];
+      if (videoId) return `https://www.youtube.com/embed/${videoId}`;
+    }
+
+    if (host.includes("vimeo.com")) {
+      const videoId = url.pathname.split("/").filter(Boolean).pop();
+      if (videoId) return `https://player.vimeo.com/video/${videoId}`;
+    }
+
+    return url.toString();
+  } catch {
+    return value.startsWith("http://") || value.startsWith("https://") ? value : "";
+  }
 }
 
 export default function RichTextEditor({
@@ -62,6 +122,7 @@ export default function RichTextEditor({
         types: ["heading", "paragraph"],
       }),
       ImageNode,
+      EmbedNode,
     ],
     content: value || "<p></p>",
     editorProps: {
@@ -112,6 +173,33 @@ export default function RichTextEditor({
         attrs: {
           src: imageUrl,
           alt: file.name,
+        },
+      })
+      .run();
+  };
+
+  const handleEmbedInsert = () => {
+    const input = window.prompt(
+      "Paste a YouTube, Vimeo, or direct embed URL",
+      ""
+    );
+
+    if (input === null) return;
+
+    const src = normalizeEmbedUrl(input);
+    if (!src) {
+      window.alert("Please enter a valid embed URL.");
+      return;
+    }
+
+    editor
+      .chain()
+      .focus()
+      .insertContent({
+        type: "embed",
+        attrs: {
+          src,
+          title: "Embedded content",
         },
       })
       .run();
@@ -170,6 +258,7 @@ export default function RichTextEditor({
             </MenuButton>
           </>
         )}
+        <MenuButton onClick={handleEmbedInsert}>Embed</MenuButton>
       </div>
 
       <div className="rich-editor-box">
