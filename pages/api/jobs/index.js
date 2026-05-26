@@ -4,6 +4,27 @@ import { getUserFromRequest } from "../../../lib/auth";
 
 const ALLOWED_STATUSES = new Set(["OPEN", "CLOSED", "ALL"]);
 const ALLOWED_WORK_MODES = new Set(["REMOTE", "HYBRID", "ONSITE"]);
+const FALLBACK_JOB_SELECT = {
+  id: true,
+  title: true,
+  description: true,
+  category: true,
+  type: true,
+  location: true,
+  workMode: true,
+  status: true,
+  isFeatured: true,
+  createdAt: true,
+  updatedAt: true,
+  applicationFields: true,
+  companyId: true,
+  postedById: true,
+};
+
+const isMissingSalaryOrDeadlineColumnError = (err) => {
+  const msg = String(err?.message || "").toLowerCase();
+  return msg.includes("salary") || msg.includes("applicationdeadline");
+};
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {
@@ -110,19 +131,39 @@ export default async function handler(req, res) {
 
     const where = andConditions.length ? { AND: andConditions } : {};
 
-    const [jobs, total] = await Promise.all([
-      prisma.job.findMany({
-        where,
-        include: {
-          company: true,
-          _count: { select: { applications: true } },
-        },
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
-      }),
-      prisma.job.count({ where }),
-    ]);
+    let jobs = [];
+    let total = 0;
+    try {
+      [jobs, total] = await Promise.all([
+        prisma.job.findMany({
+          where,
+          include: {
+            company: true,
+            _count: { select: { applications: true } },
+          },
+          orderBy: { createdAt: "desc" },
+          skip,
+          take: limit,
+        }),
+        prisma.job.count({ where }),
+      ]);
+    } catch (err) {
+      if (!isMissingSalaryOrDeadlineColumnError(err)) throw err;
+      [jobs, total] = await Promise.all([
+        prisma.job.findMany({
+          where,
+          select: {
+            ...FALLBACK_JOB_SELECT,
+            company: true,
+            _count: { select: { applications: true } },
+          },
+          orderBy: { createdAt: "desc" },
+          skip,
+          take: limit,
+        }),
+        prisma.job.count({ where }),
+      ]);
+    }
 
     const formattedJobs = jobs.map((job) => ({
       ...job,

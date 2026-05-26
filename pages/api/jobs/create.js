@@ -162,6 +162,11 @@ const parseApplicationDeadline = (value) => {
   return date;
 };
 
+const isMissingSalaryOrDeadlineColumnError = (err) => {
+  const msg = String(err?.message || "").toLowerCase();
+  return msg.includes("salary") || msg.includes("applicationdeadline");
+};
+
 export default requireAuth(
   async function handler(req, res) {
     if (req.method !== "POST") {
@@ -262,22 +267,31 @@ const description = sanitizeRichText(raw.description);
 
         if (updated.count !== 1) return { ok: false };
 
-        const job = await tx.job.create({
-          data: {
-            title,
-            description,
-            category,
-            type,
-            salary,
-            applicationDeadline,
-            location: canonicalLocation,
-            workMode,
-            status: "OPEN",
-            companyId: employer.company.id,
-            postedById: employer.id,
-            applicationFields,
-          },
-        });
+        const baseData = {
+          title,
+          description,
+          category,
+          type,
+          location: canonicalLocation,
+          workMode,
+          status: "OPEN",
+          companyId: employer.company.id,
+          postedById: employer.id,
+          applicationFields,
+        };
+        const withOptionalData = {
+          ...baseData,
+          ...(salary ? { salary } : {}),
+          ...(applicationDeadline ? { applicationDeadline } : {}),
+        };
+
+        let job;
+        try {
+          job = await tx.job.create({ data: withOptionalData });
+        } catch (err) {
+          if (!isMissingSalaryOrDeadlineColumnError(err)) throw err;
+          job = await tx.job.create({ data: baseData });
+        }
 
         return { ok: true, job };
       });

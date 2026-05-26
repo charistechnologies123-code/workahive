@@ -31,6 +31,27 @@ const sanitizeRichText = (value) => {
 const VALID_STATUSES = ["OPEN", "CLOSED"];
 const VALID_WORKMODES = ["REMOTE", "HYBRID", "ONSITE"];
 const VALID_APPLICATION_FIELD_TYPES = ["TEXT", "TEXTAREA", "URL", "NUMBER"];
+const FALLBACK_JOB_SELECT = {
+  id: true,
+  title: true,
+  description: true,
+  category: true,
+  type: true,
+  location: true,
+  workMode: true,
+  status: true,
+  isFeatured: true,
+  createdAt: true,
+  updatedAt: true,
+  applicationFields: true,
+  companyId: true,
+  postedById: true,
+};
+
+const isMissingSalaryOrDeadlineColumnError = (err) => {
+  const msg = String(err?.message || "").toLowerCase();
+  return msg.includes("salary") || msg.includes("applicationdeadline");
+};
 
 
 
@@ -143,14 +164,28 @@ export default async function handler(req, res) {
     // GET Job Details
     // ----------------------------
     if (req.method === "GET") {
-      const job = await prisma.job.findUnique({
-        where: { id: jobId },
-        include: {
-          company: true,
-          postedBy: true,
-          _count: { select: { applications: true } },
-        },
-      });
+      let job;
+      try {
+        job = await prisma.job.findUnique({
+          where: { id: jobId },
+          include: {
+            company: true,
+            postedBy: true,
+            _count: { select: { applications: true } },
+          },
+        });
+      } catch (err) {
+        if (!isMissingSalaryOrDeadlineColumnError(err)) throw err;
+        job = await prisma.job.findUnique({
+          where: { id: jobId },
+          select: {
+            ...FALLBACK_JOB_SELECT,
+            company: true,
+            postedBy: true,
+            _count: { select: { applications: true } },
+          },
+        });
+      }
 
       if (!job) {
         return res.status(404).json({ error: "Job not found" });
@@ -299,15 +334,35 @@ export default async function handler(req, res) {
         });
       }
 
-      const updated = await prisma.job.update({
-        where: { id: jobId },
-        data,
-        include: {
-          company: true,
-          postedBy: true,
-          _count: { select: { applications: true } },
-        },
-      });
+      let updated;
+      try {
+        updated = await prisma.job.update({
+          where: { id: jobId },
+          data,
+          include: {
+            company: true,
+            postedBy: true,
+            _count: { select: { applications: true } },
+          },
+        });
+      } catch (err) {
+        if (!isMissingSalaryOrDeadlineColumnError(err)) throw err;
+
+        const fallbackData = { ...data };
+        delete fallbackData.salary;
+        delete fallbackData.applicationDeadline;
+
+        updated = await prisma.job.update({
+          where: { id: jobId },
+          data: fallbackData,
+          select: {
+            ...FALLBACK_JOB_SELECT,
+            company: true,
+            postedBy: true,
+            _count: { select: { applications: true } },
+          },
+        });
+      }
 
       return res.status(200).json({
         ...updated,
