@@ -3,40 +3,6 @@ import { useRouter } from "next/router";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect, useRef } from "react";
 
-function SupportIcon({ size = 18 }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M4 13a8 8 0 1 1 16 0v3a2 2 0 0 1-2 2h-2v-6h4"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M4 18h2v-6H2v4a2 2 0 0 0 2 2Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M9 18a3 3 0 0 0 3 3h2"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <rect x="12.5" y="19.5" width="4" height="3" rx="1.5" stroke="currentColor" strokeWidth="2" />
-    </svg>
-  );
-}
-
 export default function Navbar() {
   const router = useRouter();
   const { user, loading } = useAuth();
@@ -200,7 +166,6 @@ export default function Navbar() {
           <div className="sidebar-divider"></div>
 
           <Link href="/support" className="sidebar-secondary sidebar-support-link" onClick={closeSidebar}>
-            <SupportIcon size={18} />
             <span>Support</span>
           </Link>
 
@@ -368,7 +333,6 @@ export default function Navbar() {
             )}
 
             <Link href="/support" className="nav-link nav-support-link nav-mobile-hide">
-              <SupportIcon size={16} />
               <span>Support</span>
             </Link>
 
