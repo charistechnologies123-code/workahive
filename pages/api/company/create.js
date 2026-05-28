@@ -2,7 +2,10 @@ import prisma from "../../../lib/prisma";
 import { requireAuth } from "../../../lib/auth";
 import { createNotification } from "../../../lib/notifications";
 import { logReferralActivity } from "../../../lib/referrals";
-import { sendAdminCompanyPendingVerificationEmail } from "../../../lib/mailer";
+import {
+  sendAdminCompanyPendingVerificationEmail,
+  sendEmployerCompanySubmittedEmail,
+} from "../../../lib/mailer";
 
 const normalize = (v) => {
   if (typeof v !== "string") return null;
@@ -162,6 +165,16 @@ export default requireAuth(
         }
       } catch (notificationError) {
         console.error("Notification creation failed:", notificationError);
+      }
+
+      try {
+        await sendEmployerCompanySubmittedEmail({
+          email: user.email,
+          name: user.name,
+          companyName: name,
+        });
+      } catch (emailError) {
+        console.error("Employer company submission email failed:", emailError);
       }
 
       try {

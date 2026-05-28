@@ -64,6 +64,88 @@ export function AdminSummaryCard({ title, description, href, meta }) {
   );
 }
 
+function AnalyticsMetricCard({ title, value, description, label }) {
+  return (
+    <div className="admin-summary-card" style={{ cursor: "default" }}>
+      <div>
+        <h3>{title}</h3>
+        <p>{description}</p>
+      </div>
+      <div className="admin-summary-meta">
+        <span>{value}</span>
+        <strong>{label}</strong>
+      </div>
+    </div>
+  );
+}
+
+export function AnalyticsSection({ analytics, loading }) {
+  const data = analytics || {};
+
+  return (
+    <div className="card">
+      <div className="card-head">
+        <h2>Analytics</h2>
+        <p className="muted">A quick view of platform activity, moderation load, and growth signals.</p>
+      </div>
+      {loading ? (
+        <p className="muted">Loading analyticsâ€¦</p>
+      ) : (
+        <div className="admin-summary-grid">
+          <AnalyticsMetricCard
+            title="Total Users"
+            description="Employers, jobseekers, and admins registered on the platform."
+            value={Number(data.totalUsers || 0).toLocaleString()}
+            label={`${Number(data.employers || 0).toLocaleString()} employers • ${Number(data.jobseekers || 0).toLocaleString()} jobseekers`}
+          />
+          <AnalyticsMetricCard
+            title="Total Jobs"
+            description="All jobs currently in the system."
+            value={Number(data.totalJobs || 0).toLocaleString()}
+            label={`${Number(data.openJobs || 0).toLocaleString()} open`}
+          />
+          <AnalyticsMetricCard
+            title="Applications"
+            description="Job applications submitted by candidates."
+            value={Number(data.totalApplications || 0).toLocaleString()}
+            label={`${Number(data.shortlistedApplications || 0).toLocaleString()} shortlisted`}
+          />
+          <AnalyticsMetricCard
+            title="Companies"
+            description="Employer company profiles awaiting or completing review."
+            value={Number(data.totalCompanies || 0).toLocaleString()}
+            label={`${Number(data.verifiedCompanies || 0).toLocaleString()} verified`}
+          />
+          <AnalyticsMetricCard
+            title="Closed Jobs"
+            description="Jobs that have been closed by employers or expired after the deadline."
+            value={Number(data.closedJobs || 0).toLocaleString()}
+            label="job status"
+          />
+          <AnalyticsMetricCard
+            title="Pending Companies"
+            description="Employer profiles that are still waiting for verification."
+            value={Number(data.pendingCompanies || 0).toLocaleString()}
+            label="review queue"
+          />
+          <AnalyticsMetricCard
+            title="Recent Jobs"
+            description="Jobs created in the last 30 days."
+            value={Number(data.recentJobs30Days || 0).toLocaleString()}
+            label="30 days"
+          />
+          <AnalyticsMetricCard
+            title="Recent Applications"
+            description="Applications submitted in the last 30 days."
+            value={Number(data.recentApplications30Days || 0).toLocaleString()}
+            label="30 days"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function TokenSettingsSection() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -654,7 +736,7 @@ export function AdminJobsSection() {
 
   const load = async () => {
     setLoading(true);
-    const res = await fetch("/api/jobs?status=ALL", { credentials: "include" });
+    const res = await fetch("/api/jobs?status=ALL&limit=50", { credentials: "include" });
     const data = await res.json();
     if (!res.ok) {
       toast.error(data.error || "Failed to load jobs");

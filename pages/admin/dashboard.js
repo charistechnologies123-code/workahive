@@ -1,46 +1,52 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { AdminSummaryCard, TokenSettingsSection } from "../../components/admin/AdminSections";
+import {
+  AdminSummaryCard,
+  AnalyticsSection,
+  TokenSettingsSection,
+} from "../../components/admin/AdminSections";
 
 export default function AdminDashboard() {
-  const [counts, setCounts] = useState({
+  const [analytics, setAnalytics] = useState({
     totalJobs: 0,
     openJobs: 0,
     closedJobs: 0,
     users: 0,
     employers: 0,
     companies: 0,
+    totalApplications: 0,
+    verifiedCompanies: 0,
+    pendingCompanies: 0,
+    recentJobs30Days: 0,
+    recentApplications30Days: 0,
   });
+  const [loadingAnalytics, setLoadingAnalytics] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     const load = async () => {
-      const [jobsRes, usersRes, companiesRes] = await Promise.all([
-        fetch("/api/admin/jobs/summary", { credentials: "include" }),
-        fetch("/api/admin/users", { credentials: "include" }),
-        fetch("/api/admin/companies", { credentials: "include" }),
-      ]);
+      const res = await fetch("/api/admin/analytics", { credentials: "include" });
 
-      if (jobsRes.status === 401 || usersRes.status === 401 || companiesRes.status === 401) {
+      if (res.status === 401) {
         router.push("/login");
         return;
       }
 
-      const jobsJson = await jobsRes.json();
-      const usersJson = await usersRes.json();
-      const companiesJson = await companiesRes.json();
-
-      const users = Array.isArray(usersJson?.users) ? usersJson.users : [];
-      const companies = Array.isArray(companiesJson?.companies) ? companiesJson.companies : [];
-
-      setCounts({
-        totalJobs: Number(jobsJson?.totalJobs ?? 0),
-        openJobs: Number(jobsJson?.openJobs ?? 0),
-        closedJobs: Number(jobsJson?.closedJobs ?? 0),
-        users: users.length,
-        employers: users.filter((user) => user.role === "EMPLOYER").length,
-        companies: companies.length,
+      const data = await res.json();
+      setAnalytics({
+        totalJobs: Number(data?.totalJobs ?? 0),
+        openJobs: Number(data?.openJobs ?? 0),
+        closedJobs: Number(data?.closedJobs ?? 0),
+        users: Number(data?.totalUsers ?? 0),
+        employers: Number(data?.employers ?? 0),
+        companies: Number(data?.totalCompanies ?? 0),
+        totalApplications: Number(data?.totalApplications ?? 0),
+        verifiedCompanies: Number(data?.verifiedCompanies ?? 0),
+        pendingCompanies: Number(data?.pendingCompanies ?? 0),
+        recentJobs30Days: Number(data?.recentJobs30Days ?? 0),
+        recentApplications30Days: Number(data?.recentApplications30Days ?? 0),
       });
+      setLoadingAnalytics(false);
     };
 
     load();
@@ -58,25 +64,25 @@ export default function AdminDashboard() {
           title="Jobs"
           description="Open the jobs management page and change job status between open and closed."
           href="/admin/jobs"
-          meta={`${counts.totalJobs} total • ${counts.openJobs} open • ${counts.closedJobs} closed`}
+          meta={`${analytics.totalJobs} total • ${analytics.openJobs} open • ${analytics.closedJobs} closed`}
         />
         <AdminSummaryCard
           title="Employer Tokens"
           description="Open the employer tokens page to search employers and adjust balances."
           href="/admin/employer-tokens"
-          meta={`${counts.employers} employers`}
+          meta={`${analytics.employers} employers`}
         />
         <AdminSummaryCard
           title="Users"
           description="Manage users and filter by employer or job seeker."
           href="/admin/users"
-          meta={`${counts.users} total users`}
+          meta={`${analytics.users} total users`}
         />
         <AdminSummaryCard
           title="Companies"
           description="Review company profiles and verify employers."
           href="/admin/companies"
-          meta={`${counts.companies} companies`}
+          meta={`${analytics.companies} companies`}
         />
         <AdminSummaryCard
           title="Blog"
@@ -87,10 +93,10 @@ export default function AdminDashboard() {
       </div>
 
       <div style={{ height: 18 }} />
+      <AnalyticsSection analytics={analytics} loading={loadingAnalytics} />
+
+      <div style={{ height: 18 }} />
       <TokenSettingsSection />
     </div>
   );
 }
-
-
-
