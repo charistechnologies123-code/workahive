@@ -40,7 +40,7 @@ export default function MaintenancePage() {
                   charistechnologies123@gmail.com
                 </a>
                 <a
-                  href="https://wa.me/2349130276015?text=Hello%20WorkaHive%20Support"
+        href="https://wa.me/2349010869268?text=Hello%20WorkaHive%20Support"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
