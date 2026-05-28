@@ -36,8 +36,8 @@ export default function MaintenancePage() {
             <div className="maintenance-meta-item">
               <span className="maintenance-meta-label">Support</span>
               <div className="maintenance-support-links">
-                <a href="mailto:charistechnologies123@gmail.com">
-                  charistechnologies123@gmail.com
+                <a href="mailto:support.workahive@gmail.com">
+                  support.workahive@gmail.com
                 </a>
                 <a
         href="https://wa.me/2349010869268?text=Hello%20WorkaHive%20Support"

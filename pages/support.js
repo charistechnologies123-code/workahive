@@ -9,8 +9,8 @@ export default function SupportPage() {
   const [tokens, setTokens] = useState(null);
   const [note, setNote] = useState("");
 
-  const whatsappNumber = "2349130276015";
-  const adminEmail = "support@workahive.com";
+  const whatsappNumber = "2349010869268";
+  const adminEmail = "support.workahive@gmail.com";
 
   // Fetch token plans dynamically
   useEffect(() => {
