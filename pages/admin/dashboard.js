@@ -11,8 +11,9 @@ export default function AdminDashboard() {
     totalJobs: 0,
     openJobs: 0,
     closedJobs: 0,
-    users: 0,
+    totalUsers: 0,
     employers: 0,
+    jobseekers: 0,
     companies: 0,
     totalApplications: 0,
     verifiedCompanies: 0,
@@ -37,8 +38,9 @@ export default function AdminDashboard() {
         totalJobs: Number(data?.totalJobs ?? 0),
         openJobs: Number(data?.openJobs ?? 0),
         closedJobs: Number(data?.closedJobs ?? 0),
-        users: Number(data?.totalUsers ?? 0),
+        totalUsers: Number(data?.totalUsers ?? 0),
         employers: Number(data?.employers ?? 0),
+        jobseekers: Number(data?.jobseekers ?? 0),
         companies: Number(data?.totalCompanies ?? 0),
         totalApplications: Number(data?.totalApplications ?? 0),
         verifiedCompanies: Number(data?.verifiedCompanies ?? 0),
@@ -76,7 +78,7 @@ export default function AdminDashboard() {
           title="Users"
           description="Manage users and filter by employer or job seeker."
           href="/admin/users"
-          meta={`${analytics.users} total users`}
+          meta={`${analytics.totalUsers} total users`}
         />
         <AdminSummaryCard
           title="Companies"
