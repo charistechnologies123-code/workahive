@@ -58,7 +58,7 @@ export function AdminSummaryCard({ title, description, href, meta }) {
       </div>
       <div className="admin-summary-meta">
         <span>{meta}</span>
-        <strong>Open</strong>
+        <strong>View</strong>
       </div>
     </Link>
   );

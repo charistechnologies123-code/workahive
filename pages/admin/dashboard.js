@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { AdminSummaryCard, TokenSettingsSection } from "../../components/admin/AdminSections";
 
 export default function AdminDashboard() {
   const [counts, setCounts] = useState({
+    totalJobs: 0,
     openJobs: 0,
     closedJobs: 0,
     users: 0,
@@ -15,7 +16,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     const load = async () => {
       const [jobsRes, usersRes, companiesRes] = await Promise.all([
-        fetch("/api/jobs?status=ALL", { credentials: "include" }),
+        fetch("/api/admin/jobs/summary", { credentials: "include" }),
         fetch("/api/admin/users", { credentials: "include" }),
         fetch("/api/admin/companies", { credentials: "include" }),
       ]);
@@ -29,13 +30,13 @@ export default function AdminDashboard() {
       const usersJson = await usersRes.json();
       const companiesJson = await companiesRes.json();
 
-      const jobs = Array.isArray(jobsJson?.jobs) ? jobsJson.jobs : [];
       const users = Array.isArray(usersJson?.users) ? usersJson.users : [];
       const companies = Array.isArray(companiesJson?.companies) ? companiesJson.companies : [];
 
       setCounts({
-        openJobs: jobs.filter((job) => String(job.status || "").toUpperCase() === "OPEN").length,
-        closedJobs: jobs.filter((job) => String(job.status || "").toUpperCase() === "CLOSED").length,
+        totalJobs: Number(jobsJson?.totalJobs ?? 0),
+        openJobs: Number(jobsJson?.openJobs ?? 0),
+        closedJobs: Number(jobsJson?.closedJobs ?? 0),
         users: users.length,
         employers: users.filter((user) => user.role === "EMPLOYER").length,
         companies: companies.length,
@@ -57,7 +58,7 @@ export default function AdminDashboard() {
           title="Jobs"
           description="Open the jobs management page and change job status between open and closed."
           href="/admin/jobs"
-          meta={`${counts.openJobs} open • ${counts.closedJobs} closed`}
+          meta={`${counts.totalJobs} total • ${counts.openJobs} open • ${counts.closedJobs} closed`}
         />
         <AdminSummaryCard
           title="Employer Tokens"
@@ -90,3 +91,6 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
+
+
