@@ -393,6 +393,7 @@ export function UsersSection({ currentAdminId }) {
                     {user.role === "EMPLOYER" ? ` • ${user.tokens ?? 0} tokens` : ""}
                     {` | ${user.emailVerified ? "Email verified" : "Email not verified"}`}
                   </p>
+                  <p className="muted small">Joined WorkaHive: {formatWorkaHiveDate(user.createdAt)}</p>
                 </div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   {user.emailVerified ? (
