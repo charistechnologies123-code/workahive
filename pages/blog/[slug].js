@@ -6,7 +6,11 @@ import { formatWorkaHiveDateTime } from "../../lib/date-format";
 import { getBlogExcerpt, getBlogPreviewImage } from "../../lib/blog";
 
 function getCommentAuthor(comment) {
-  return comment?.displayName || comment?.user?.name || "Anonymous";
+  const displayName = String(comment?.displayName || "").trim();
+  const userName = String(comment?.user?.name || "").trim();
+  if (displayName && displayName.toLowerCase() !== "anonymous") return displayName;
+  if (userName) return userName;
+  return "Anonymous";
 }
 
 export default function BlogPostPage() {
@@ -219,13 +223,29 @@ export default function BlogPostPage() {
           <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 16 }}>
             <button
               type="button"
-              className="btn-soft"
               onClick={toggleLike}
               disabled={busyLike}
-              style={{ minWidth: 130, display: "inline-flex", justifyContent: "center", gap: 8 }}
+              aria-pressed={Boolean(post.likedByMe)}
+              aria-label={post.likedByMe ? "Unlike post" : "Like post"}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 10,
+                border: "1px solid #fbcfe8",
+                borderRadius: 999,
+                padding: "10px 14px",
+                background: post.likedByMe ? "#fff1f2" : "#fff",
+                color: post.likedByMe ? "#e11d48" : "#be123c",
+                fontWeight: 800,
+                boxShadow: "0 6px 16px rgba(225, 29, 72, 0.08)",
+                cursor: busyLike ? "not-allowed" : "pointer",
+                minWidth: 0,
+              }}
             >
-              <span>{post.likedByMe ? "Unlike" : "Like"}</span>
-              <strong>{Number(post.likesCount || 0)}</strong>
+              <span aria-hidden="true" style={{ fontSize: 18, lineHeight: 1 }}>
+                {post.likedByMe ? "♥" : "♡"}
+              </span>
+              <span>{Number(post.likesCount || 0)}</span>
             </button>
           </div>
 
@@ -328,7 +348,6 @@ export default function BlogPostPage() {
                     {me?.name || "Anonymous"}
                   </span>
                 </p>
-                <span className="muted small">Logged-in names show automatically. Guests post as Anonymous.</span>
               </div>
 
               <textarea

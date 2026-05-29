@@ -33,7 +33,7 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "POST") {
-    const user = getUserFromRequest(req);
+    const jwtUser = getUserFromRequest(req);
     const postId = Number(req.body?.postId);
     const parentId = req.body?.parentId == null ? null : Number(req.body.parentId);
     const body = normalizeBody(req.body?.body);
@@ -51,6 +51,13 @@ export default async function handler(req, res) {
     }
 
     if (parentId != null) {
+      const user = jwtUser
+        ? await prisma.user.findUnique({
+            where: { id: Number(jwtUser.id) },
+            select: { id: true, name: true, role: true },
+          })
+        : null;
+
       if (!user || user.role !== "ADMIN") {
         return res.status(403).json({ error: "Only admins can reply to comments" });
       }
@@ -62,6 +69,13 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: "Invalid parent comment" });
       }
     }
+
+    const user = jwtUser
+      ? await prisma.user.findUnique({
+          where: { id: Number(jwtUser.id) },
+          select: { id: true, name: true, role: true },
+        })
+      : null;
 
     const comment = await prisma.blogComment.create({
       data: {

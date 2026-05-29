@@ -253,7 +253,9 @@ export default function AdminBlogPage() {
                           <div key={comment.id} style={{ padding: 12, borderRadius: 14, border: "1px solid #e5e7eb", background: "#fafafa" }}>
                             <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                               <p style={{ margin: 0, fontWeight: 800 }}>
-                                {comment.displayName || comment.user?.name || "Anonymous"}
+                                {String(comment.displayName || "").trim().toLowerCase() !== "anonymous" && comment.displayName
+                                  ? comment.displayName
+                                  : comment.user?.name || "Anonymous"}
                               </p>
                               <button
                                 type="button"
@@ -273,7 +275,9 @@ export default function AdminBlogPage() {
                                   <div key={reply.id} style={{ marginTop: 8 }}>
                                     <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                                       <p style={{ margin: 0, fontWeight: 800, fontSize: 14 }}>
-                                        {reply.displayName || reply.user?.name || "Admin"}
+                                        {String(reply.displayName || "").trim().toLowerCase() !== "anonymous" && reply.displayName
+                                          ? reply.displayName
+                                          : reply.user?.name || "Admin"}
                                       </p>
                                       <button
                                         type="button"
