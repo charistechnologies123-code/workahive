@@ -31,6 +31,7 @@ model User {
   notifications      Notification[]
   blogPosts          BlogPost[]
   blogComments       BlogComment[]
+  blogLikes          BlogLike[]
   referredBy         User?         @relation("UserReferrals", fields: [referredById], references: [id], onDelete: SetNull)
   referrals          User[]        @relation("UserReferrals")
   referralActivities ReferralActivity[]
@@ -172,24 +173,39 @@ model BlogPost {
   authorId    Int
   author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   comments    BlogComment[]
+  likes       BlogLike[]
 }
 
 model BlogComment {
   id        Int           @id @default(autoincrement())
   body      String
+  displayName String?
   createdAt DateTime      @default(now()) @db.Timestamp(6)
   updatedAt DateTime      @default(now()) @updatedAt @db.Timestamp(6)
   postId    Int
-  userId    Int
+  userId    Int?
   parentId  Int?
   post      BlogPost      @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user      User?         @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: NoAction)
   parent    BlogComment?  @relation("BlogCommentReplies", fields: [parentId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   replies   BlogComment[] @relation("BlogCommentReplies")
 
   @@index([postId, createdAt])
   @@index([userId, createdAt])
   @@index([parentId])
+}
+
+model BlogLike {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  postId    Int
+  userId    Int
+  post      BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([postId, userId])
+  @@index([postId, createdAt])
+  @@index([userId, createdAt])
 }
 
 enum Role {

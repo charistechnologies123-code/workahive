@@ -62,11 +62,35 @@ export default async function handler(req, res) {
         author: {
           select: { id: true, name: true },
         },
+        _count: {
+          select: { comments: true, likes: true },
+        },
       },
       orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
     });
 
-    return res.status(200).json({ posts });
+    const likedPostIds = user?.id
+      ? new Set(
+          (
+            await prisma.blogLike.findMany({
+              where: {
+                userId: Number(user.id),
+                postId: { in: posts.map((post) => post.id) },
+              },
+              select: { postId: true },
+            })
+          ).map((item) => item.postId)
+        )
+      : new Set();
+
+    const enrichedPosts = posts.map((post) => ({
+      ...post,
+      likesCount: post._count?.likes || 0,
+      commentsCount: post._count?.comments || 0,
+      likedByMe: likedPostIds.has(post.id),
+    }));
+
+    return res.status(200).json({ posts: enrichedPosts });
   }
 
   if (req.method === "POST") {

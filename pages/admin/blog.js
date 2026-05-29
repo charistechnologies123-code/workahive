@@ -17,6 +17,8 @@ export default function AdminBlogPage() {
   const [posts, setPosts] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [commentsByPost, setCommentsByPost] = useState({});
+  const [loadingCommentsForPost, setLoadingCommentsForPost] = useState(null);
   const { confirm, dialog } = useConfirmDialog();
 
   const load = async () => {
@@ -105,6 +107,36 @@ export default function AdminBlogPage() {
         load();
       },
     });
+  };
+
+  const loadComments = async (postId) => {
+    setLoadingCommentsForPost(postId);
+    const res = await fetch(`/api/blog/comments?postId=${postId}`, { credentials: "include" });
+    const data = await res.json();
+    if (!res.ok) {
+      toast.error(data.error || "Failed to load comments");
+      setLoadingCommentsForPost(null);
+      return;
+    }
+    setCommentsByPost((prev) => ({
+      ...prev,
+      [postId]: Array.isArray(data.comments) ? data.comments : [],
+    }));
+    setLoadingCommentsForPost(null);
+  };
+
+  const deleteComment = async (postId, commentId) => {
+    const res = await fetch(`/api/blog/comments?id=${commentId}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      toast.error(data.error || "Failed to delete comment");
+      return;
+    }
+    toast.success("Comment deleted.");
+    await loadComments(postId);
   };
 
   return (
@@ -197,7 +229,74 @@ export default function AdminBlogPage() {
                   <button type="button" className="btn-danger" onClick={() => deletePost(post)}>
                     Delete
                   </button>
+                  <button
+                    type="button"
+                    className="btn-soft"
+                    onClick={() => loadComments(post.id)}
+                    disabled={loadingCommentsForPost === post.id}
+                  >
+                    {loadingCommentsForPost === post.id
+                      ? "Loading comments..."
+                      : `View comments (${Number(post._count?.comments || 0)})`}
+                  </button>
                 </div>
+
+                {Array.isArray(commentsByPost[post.id]) && (
+                  <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid #e5e7eb" }}>
+                    {commentsByPost[post.id].length === 0 ? (
+                      <p className="muted small" style={{ margin: 0 }}>
+                        No comments for this post yet.
+                      </p>
+                    ) : (
+                      <div style={{ display: "grid", gap: 12 }}>
+                        {commentsByPost[post.id].map((comment) => (
+                          <div key={comment.id} style={{ padding: 12, borderRadius: 14, border: "1px solid #e5e7eb", background: "#fafafa" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                              <p style={{ margin: 0, fontWeight: 800 }}>
+                                {comment.displayName || comment.user?.name || "Anonymous"}
+                              </p>
+                              <button
+                                type="button"
+                                className="btn-soft"
+                                onClick={() => deleteComment(post.id, comment.id)}
+                              >
+                                Delete
+                              </button>
+                            </div>
+                            <p className="muted small" style={{ margin: "4px 0 8px" }}>
+                              {formatWorkaHiveDateTime(comment.createdAt)}
+                            </p>
+                            <p style={{ margin: 0 }}>{comment.body}</p>
+                            {Array.isArray(comment.replies) && comment.replies.length > 0 && (
+                              <div style={{ marginTop: 10, paddingLeft: 12, borderLeft: "2px solid #e5e7eb" }}>
+                                {comment.replies.map((reply) => (
+                                  <div key={reply.id} style={{ marginTop: 8 }}>
+                                    <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                                      <p style={{ margin: 0, fontWeight: 800, fontSize: 14 }}>
+                                        {reply.displayName || reply.user?.name || "Admin"}
+                                      </p>
+                                      <button
+                                        type="button"
+                                        className="btn-soft"
+                                        onClick={() => deleteComment(post.id, reply.id)}
+                                      >
+                                        Delete
+                                      </button>
+                                    </div>
+                                    <p className="muted small" style={{ margin: "4px 0 0" }}>
+                                      {formatWorkaHiveDateTime(reply.createdAt)}
+                                    </p>
+                                    <p style={{ margin: "4px 0 0" }}>{reply.body}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>

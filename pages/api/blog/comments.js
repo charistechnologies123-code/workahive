@@ -34,8 +34,6 @@ export default async function handler(req, res) {
 
   if (req.method === "POST") {
     const user = getUserFromRequest(req);
-    if (!user) return res.status(401).json({ error: "Login required" });
-
     const postId = Number(req.body?.postId);
     const parentId = req.body?.parentId == null ? null : Number(req.body.parentId);
     const body = normalizeBody(req.body?.body);
@@ -53,7 +51,7 @@ export default async function handler(req, res) {
     }
 
     if (parentId != null) {
-      if (user.role !== "ADMIN") {
+      if (!user || user.role !== "ADMIN") {
         return res.status(403).json({ error: "Only admins can reply to comments" });
       }
       const parent = await prisma.blogComment.findUnique({
@@ -68,7 +66,8 @@ export default async function handler(req, res) {
     const comment = await prisma.blogComment.create({
       data: {
         postId,
-        userId: user.id,
+        userId: user?.id ?? null,
+        displayName: user?.name?.trim() || "Anonymous",
         parentId,
         body,
       },
