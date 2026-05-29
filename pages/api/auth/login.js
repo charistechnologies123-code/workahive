@@ -1,7 +1,12 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import prisma from "../../../lib/prisma";
-import { EMAIL_VERIFICATION_ERROR } from "../../../lib/auth";
+import {
+  EMAIL_VERIFICATION_ERROR,
+  buildAuthCookie,
+  getAuthTokenOptions,
+  normalizeRememberMe,
+} from "../../../lib/auth";
 
 const JWT_SECRET = process.env.JWT_SECRET || "secret";
 
@@ -13,7 +18,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { email, password } = req.body;
+  const { email, password, rememberMe } = req.body;
   if (!email || !password) {
     return res.status(400).json({ error: "Email and password are required" });
   }
@@ -40,13 +45,12 @@ export default async function handler(req, res) {
       });
     }
 
-    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: "7d" });
+    const authOptions = getAuthTokenOptions(normalizeRememberMe(rememberMe));
+    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, {
+      expiresIn: authOptions.expiresIn,
+    });
 
-    // HttpOnly cookie (recommended: add SameSite, Secure in production)
-    res.setHeader(
-      "Set-Cookie",
-      `token=${token}; HttpOnly; Path=/; Max-Age=604800; SameSite=Lax`
-    );
+    res.setHeader("Set-Cookie", buildAuthCookie(token, normalizeRememberMe(rememberMe)));
 
     // ✅ If their password is weak, force-change flow
     const mustChangePassword = !strongPasswordRegex.test(password);

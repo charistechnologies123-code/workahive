@@ -25,7 +25,7 @@ function EyeOffIcon() {
 
 export default function Login() {
   const router = useRouter();
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ email: "", password: "", rememberMe: true });
   const [showPassword, setShowPassword] = useState(false);
   const presetEmail = String(router.query.email || "");
   const resetStatus = String(router.query.reset || "");
@@ -119,6 +119,27 @@ export default function Login() {
               </button>
             </div>
           </div>
+
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              margin: "0 0 16px",
+              fontSize: 14,
+              color: "var(--text)",
+              cursor: "pointer",
+              userSelect: "none",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={form.rememberMe}
+              style={{ width: 16, height: 16, margin: 0, accentColor: "var(--primary)" }}
+              onChange={(event) => setForm((prev) => ({ ...prev, rememberMe: event.target.checked }))}
+            />
+            <span>Remember me on this device</span>
+          </label>
 
           <button className="btn-primary" type="submit">Login</button>
 
