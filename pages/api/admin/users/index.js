@@ -39,6 +39,11 @@ export default async function handler(req, res) {
       role: true,
       tokens: true,
       createdAt: true,
+      _count: {
+        select: {
+          referrals: true,
+        },
+      },
     },
     orderBy: { createdAt: "desc" },
     take: 100,

@@ -354,6 +354,9 @@ export function UsersSection({ currentAdminId }) {
   const [loading, setLoading] = useState(false);
   const [updatingUserId, setUpdatingUserId] = useState(null);
   const [users, setUsers] = useState([]);
+  const [expandedReferralsUserId, setExpandedReferralsUserId] = useState(null);
+  const [referralsByUserId, setReferralsByUserId] = useState({});
+  const [loadingReferralsForUserId, setLoadingReferralsForUserId] = useState(null);
   const { confirm, dialog } = useConfirmDialog();
 
   const load = async (nextRole = role, nextQuery = q) => {
@@ -422,6 +425,35 @@ export function UsersSection({ currentAdminId }) {
     setUpdatingUserId(null);
   };
 
+  const loadReferrals = async (userId) => {
+    if (expandedReferralsUserId === userId && referralsByUserId[userId]) {
+      setExpandedReferralsUserId(null);
+      return;
+    }
+
+    setExpandedReferralsUserId(userId);
+    if (referralsByUserId[userId]) return;
+
+    setLoadingReferralsForUserId(userId);
+    const res = await fetch(`/api/admin/users/${userId}/referrals`, { credentials: "include" });
+    const data = await res.json();
+    if (!res.ok) {
+      toast.error(data.error || "Failed to load referrals");
+      setLoadingReferralsForUserId(null);
+      return;
+    }
+
+    setReferralsByUserId((prev) => ({
+      ...prev,
+      [userId]: {
+        user: data.user || null,
+        referrals: Array.isArray(data.referrals) ? data.referrals : [],
+        referralCount: Number(data.referralCount || 0),
+      },
+    }));
+    setLoadingReferralsForUserId(null);
+  };
+
   return (
     <>
       <div className="card">
@@ -476,8 +508,12 @@ export function UsersSection({ currentAdminId }) {
                     {` | ${user.emailVerified ? "Email verified" : "Email not verified"}`}
                   </p>
                   <p className="muted small">Joined WorkaHive: {formatWorkaHiveDate(user.createdAt)}</p>
+                  <p className="muted small">Referrals: {Number(user._count?.referrals || 0)}</p>
                 </div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <button type="button" className="btn-soft" onClick={() => loadReferrals(user.id)}>
+                    {expandedReferralsUserId === user.id ? "Hide Referrals" : "View Referrals"}
+                  </button>
                   {user.emailVerified ? (
                     <button
                       type="button"
@@ -501,6 +537,142 @@ export function UsersSection({ currentAdminId }) {
                     Delete
                   </button>
                 </div>
+
+                {expandedReferralsUserId === user.id && (
+                  <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid #e5e7eb" }}>
+                    {loadingReferralsForUserId === user.id ? (
+                      <p className="muted small" style={{ margin: 0 }}>
+                        Loading referrals...
+                      </p>
+                    ) : (() => {
+                        const referralData = referralsByUserId[user.id];
+                        const referrals = referralData?.referrals || [];
+
+                        if (referrals.length === 0) {
+                          return (
+                            <p className="muted small" style={{ margin: 0 }}>
+                              No referrals for this user yet.
+                            </p>
+                          );
+                        }
+
+                        return (
+                          <div style={{ display: "grid", gap: 12 }}>
+                            {referrals.map((referral) => (
+                              <div
+                                key={referral.id}
+                                style={{
+                                  padding: 14,
+                                  borderRadius: 16,
+                                  border: "1px solid #e5e7eb",
+                                  background: "#fafafa",
+                                }}
+                              >
+                                <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                                  <div>
+                                    <p style={{ margin: 0, fontWeight: 800, fontSize: 15 }}>
+                                      {referral.name || "—"}{" "}
+                                      <span className="muted small" style={{ fontWeight: 600 }}>
+                                        ({referral.role || "—"})
+                                      </span>
+                                    </p>
+                                    <p className="muted small" style={{ margin: "4px 0 0" }}>
+                                      {referral.email} • Joined: {referral.joinedAt}
+                                    </p>
+                                  </div>
+                                  {referral.company?.name && (
+                                    <p className="muted small" style={{ margin: 0, fontWeight: 700 }}>
+                                      Company: {referral.company.name}
+                                      {referral.company.verified ? " • Verified" : " • Pending"}
+                                    </p>
+                                  )}
+                                </div>
+
+                                {referral.role === "EMPLOYER" && (
+                                  <div style={{ marginTop: 12, display: "grid", gap: 8 }}>
+                                    <p style={{ margin: 0 }}>
+                                      Jobs posted: <strong>{Number(referral.jobsPosted || 0)}</strong>
+                                    </p>
+                                    <p style={{ margin: 0 }}>
+                                      Tokens used: <strong>Not tracked automatically yet</strong>
+                                    </p>
+                                    <p style={{ margin: 0 }}>
+                                      Current tokens: <strong>{Number(referral.tokens ?? 0).toLocaleString()}</strong>
+                                    </p>
+                                    <p className="muted small" style={{ margin: 0 }}>
+                                      {referral.tokensUsedNote}
+                                    </p>
+                                    {Array.isArray(referral.recentJobs) && referral.recentJobs.length > 0 && (
+                                      <div style={{ marginTop: 8 }}>
+                                        <p style={{ margin: "0 0 8px", fontWeight: 700 }}>Recent jobs</p>
+                                        <div style={{ display: "grid", gap: 8 }}>
+                                          {referral.recentJobs.map((job) => (
+                                            <div
+                                              key={job.id}
+                                              style={{
+                                                padding: "10px 12px",
+                                                borderRadius: 12,
+                                                background: "#fff",
+                                                border: "1px solid #e5e7eb",
+                                              }}
+                                            >
+                                              <p style={{ margin: 0, fontWeight: 700 }}>{job.title}</p>
+                                              <p className="muted small" style={{ margin: "4px 0 0" }}>
+                                                {job.status} • {formatWorkaHiveDate(job.createdAt)} • {Number(job._count?.applications || 0)} applications
+                                              </p>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                {referral.role === "JOBSEEKER" && (
+                                  <div style={{ marginTop: 12, display: "grid", gap: 8 }}>
+                                    <p style={{ margin: 0 }}>
+                                      Total applications: <strong>{Number(referral.totalApplications || 0)}</strong>
+                                    </p>
+                                    <p style={{ margin: 0 }}>
+                                      Shortlisted: <strong>{Number(referral.shortlisted || 0)}</strong>
+                                    </p>
+                                    <p style={{ margin: 0 }}>
+                                      Tokens: <strong>{Number(referral.tokens ?? 0).toLocaleString()}</strong>
+                                    </p>
+                                    {Array.isArray(referral.recentApplications) && referral.recentApplications.length > 0 && (
+                                      <div style={{ marginTop: 8 }}>
+                                        <p style={{ margin: "0 0 8px", fontWeight: 700 }}>Recent applications</p>
+                                        <div style={{ display: "grid", gap: 8 }}>
+                                          {referral.recentApplications.map((application) => (
+                                            <div
+                                              key={application.id}
+                                              style={{
+                                                padding: "10px 12px",
+                                                borderRadius: 12,
+                                                background: "#fff",
+                                                border: "1px solid #e5e7eb",
+                                              }}
+                                            >
+                                              <p style={{ margin: 0, fontWeight: 700 }}>
+                                                {application.job?.title || "Untitled job"}
+                                              </p>
+                                              <p className="muted small" style={{ margin: "4px 0 0" }}>
+                                                {application.job?.company?.name || "Unknown company"} • {application.status} • {formatWorkaHiveDate(application.createdAt)}
+                                              </p>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                  </div>
+                )}
               </div>
             ))}
           </div>
