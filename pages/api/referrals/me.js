@@ -28,29 +28,11 @@ export default async function handler(req, res) {
           email: true,
           role: true,
           createdAt: true,
+          tokens: true,
           company: {
             select: {
               name: true,
               verified: true,
-            },
-          },
-          jobs: {
-            orderBy: { createdAt: "desc" },
-            take: 10,
-            select: {
-              id: true,
-              title: true,
-              _count: { select: { applications: true } },
-            },
-          },
-          referralActivities: {
-            orderBy: { createdAt: "desc" },
-            take: 20,
-            select: {
-              id: true,
-              title: true,
-              description: true,
-              createdAt: true,
             },
           },
         },
@@ -63,9 +45,42 @@ export default async function handler(req, res) {
   }
 
   const referralCode = me.referralCode || (await ensureUserReferralCode(me.id, me.name));
+  const referrals = await Promise.all(
+    (me.referrals || []).map(async (referral) => {
+      if (referral.role === "EMPLOYER") {
+        const jobsPosted = await prisma.job.count({
+          where: { postedById: referral.id },
+        });
+
+        return {
+          ...referral,
+          jobsPosted,
+        };
+      }
+
+      if (referral.role === "JOBSEEKER") {
+        const [totalApplications, shortlistedApplications] = await Promise.all([
+          prisma.application.count({
+            where: { applicantId: referral.id },
+          }),
+          prisma.application.count({
+            where: { applicantId: referral.id, status: "SHORTLISTED" },
+          }),
+        ]);
+
+        return {
+          ...referral,
+          totalApplications,
+          shortlistedApplications,
+        };
+      }
+
+      return referral;
+    })
+  );
 
   return res.status(200).json({
     referralCode,
-    referrals: me.referrals || [],
+    referrals,
   });
 }

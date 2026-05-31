@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import toast from "react-hot-toast";
 import { formatWorkaHiveDate } from "../lib/date-format";
 
 function ReferredUserCard({ referral }) {
+  const isEmployer = String(referral.role || "").toUpperCase() === "EMPLOYER";
+  const isJobseeker = String(referral.role || "").toUpperCase() === "JOBSEEKER";
+
   return (
     <div className="card" style={{ marginBottom: 12 }}>
       <div className="card-head">
@@ -13,20 +15,33 @@ function ReferredUserCard({ referral }) {
         </p>
       </div>
 
-      {referral.role === "EMPLOYER" && referral.company && (
-        <p className="muted small">
-          Company profile: {referral.company.name} ({referral.company.verified ? "Verified" : "Pending verification"})
-        </p>
+      {isEmployer && referral.company && (
+        <div className="muted small" style={{ display: "grid", gap: 4 }}>
+          <p style={{ margin: 0 }}>
+            Company profile: {referral.company.name} ({referral.company.verified ? "Verified" : "Pending verification"})
+          </p>
+          <p style={{ margin: 0 }}>
+            Current tokens: <strong>{Number(referral.tokens ?? 0).toLocaleString()}</strong>
+          </p>
+          <p style={{ margin: 0 }}>
+            Jobs posted: <strong>{Number(referral.jobsPosted || 0).toLocaleString()}</strong>
+          </p>
+        </div>
       )}
 
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
-        <p className="muted small" style={{ margin: 0 }}>
-          Open the referral details page to view jobs, applications, and activity.
-        </p>
-        <Link href={`/referrals/${referral.id}`} className="btn-soft">
-          View Details
-        </Link>
-      </div>
+      {isJobseeker && (
+        <div className="muted small" style={{ display: "grid", gap: 4 }}>
+          <p style={{ margin: 0 }}>
+            Current tokens: <strong>{Number(referral.tokens ?? 0).toLocaleString()}</strong>
+          </p>
+          <p style={{ margin: 0 }}>
+            Applications: <strong>{Number(referral.totalApplications || 0).toLocaleString()}</strong>
+          </p>
+          <p style={{ margin: 0 }}>
+            Shortlisted: <strong>{Number(referral.shortlistedApplications || 0).toLocaleString()}</strong>
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -66,7 +81,7 @@ export default function ReferralsSection() {
       </div>
 
       {loading ? (
-        <p className="muted">Loading referralsâ€¦</p>
+        <p className="muted">Loading referrals…</p>
       ) : !data ? (
         <p className="muted">Unable to load referrals right now.</p>
       ) : (
