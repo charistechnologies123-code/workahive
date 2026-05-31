@@ -124,9 +124,9 @@ export default function ReferralDetailsPage() {
                   Current tokens: <strong>{Number(referral.tokens ?? 0).toLocaleString()}</strong>
                 </p>
 
-                <div style={{ marginTop: 16 }}>
-                  <h3 style={{ margin: "0 0 10px" }}>Recent Jobs</h3>
-                  {Array.isArray(referral.recentJobs) && referral.recentJobs.length > 0 ? (
+                {Array.isArray(referral.recentJobs) && referral.recentJobs.length > 0 && (
+                  <div style={{ marginTop: 16 }}>
+                    <h3 style={{ margin: "0 0 10px" }}>Recent Jobs</h3>
                     <div className="job-list">
                       {referral.recentJobs.map((job) => (
                         <div key={job.id} className="job-item">
@@ -140,10 +140,8 @@ export default function ReferralDetailsPage() {
                         </div>
                       ))}
                     </div>
-                  ) : (
-                    <p className="muted small">No jobs posted yet.</p>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </SectionCard>
           )}
