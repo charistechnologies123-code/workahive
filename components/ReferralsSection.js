@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import toast from "react-hot-toast";
 import { formatWorkaHiveDate } from "../lib/date-format";
 
@@ -18,40 +19,13 @@ function ReferredUserCard({ referral }) {
         </p>
       )}
 
-      {Array.isArray(referral.jobs) && referral.jobs.length > 0 && (
-        <div className="job-list" style={{ marginBottom: 12 }}>
-          {referral.jobs.map((job) => (
-            <div key={job.id} className="job-item">
-              <div>
-                <p className="job-title">{job.title}</p>
-                <p className="muted small">Total applications: {job._count?.applications ?? 0}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div>
-        <p className="muted small" style={{ marginBottom: 8 }}>
-          Activities
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+        <p className="muted small" style={{ margin: 0 }}>
+          Open the referral details page to view jobs, applications, and activity.
         </p>
-        {Array.isArray(referral.referralActivities) && referral.referralActivities.length > 0 ? (
-          <div className="job-list">
-            {referral.referralActivities.map((activity) => (
-              <div key={activity.id} className="job-item">
-                <div>
-                  <p className="job-title">{activity.title}</p>
-                  <p className="muted small">{activity.description}</p>
-                </div>
-                <span className="muted small">
-                  {formatWorkaHiveDate(activity.createdAt)}
-                </span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="muted small">No tracked activities yet.</p>
-        )}
+        <Link href={`/referrals/${referral.id}`} className="btn-soft">
+          View Details
+        </Link>
       </div>
     </div>
   );
@@ -88,11 +62,11 @@ export default function ReferralsSection() {
     <div className="card">
       <div className="card-head">
         <h2>My Referrals</h2>
-        <p className="muted">Share your referral code and monitor activity from referred users.</p>
+        <p className="muted">Share your referral code and browse your referred users.</p>
       </div>
 
       {loading ? (
-        <p className="muted">Loading referrals…</p>
+        <p className="muted">Loading referralsâ€¦</p>
       ) : !data ? (
         <p className="muted">Unable to load referrals right now.</p>
       ) : (

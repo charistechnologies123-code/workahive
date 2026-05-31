@@ -105,7 +105,6 @@ export default async function handler(req, res) {
           ...base,
           jobsPosted,
           recentJobs,
-          tokensUsedNote: "Tokens bought are tracked manually, so usage cannot be verified automatically yet.",
         };
       }
 
