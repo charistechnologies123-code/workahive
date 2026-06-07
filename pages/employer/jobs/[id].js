@@ -46,7 +46,6 @@ export default function EmployerJobManage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [statusBusy, setStatusBusy] = useState(false);
-  const [showQuestionsEditor, setShowQuestionsEditor] = useState(false);
 
   const [form, setForm] = useState({
     title: "",
@@ -577,7 +576,7 @@ export default function EmployerJobManage() {
             </div>
           </div>
 
-          <div className={`card ${showQuestionsEditor ? "" : "questions-collapsed"}`} style={{ marginTop: 8 }}>
+          <div className="card" style={{ marginTop: 8 }}>
             <div
               className="card-head"
               style={{
@@ -597,26 +596,17 @@ export default function EmployerJobManage() {
                     add will be required for applicants.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  className="btn-soft"
-                  onClick={() => setShowQuestionsEditor((prev) => !prev)}
-                >
-                  {showQuestionsEditor ? "Hide Questions" : "Edit Questions"}
-                </button>
-              </div>
 
-              {showQuestionsEditor && (
-                <button
-                  type="button"
-                  className="btn-soft"
-                  onClick={addApplicationField}
-                >
-                  + Add Question
-                </button>
-              )}
+              <button
+                type="button"
+                className="btn-soft"
+                onClick={addApplicationField}
+              >
+                + Add Question
+              </button>
+            </div>
 
-            {showQuestionsEditor && (form.applicationFields.length === 0 ? (
+            {form.applicationFields.length === 0 ? (
               <p className="muted small" style={{ marginTop: 10 }}>
                 No custom questions added yet.
               </p>
@@ -715,7 +705,7 @@ export default function EmployerJobManage() {
                   </div>
                 ))}
               </div>
-            ))}
+            )}
           </div>
 
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
