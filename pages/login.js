@@ -69,14 +69,14 @@ export default function Login() {
     toast.success("Login successful.");
 
     if (data.mustChangePassword) {
-      if (data.role === "ADMIN") return router.push("/admin/profile");
-      if (data.role === "EMPLOYER") return router.push("/employer/profile");
-      return router.push("/jobseeker/profile");
+      if (data.role === "ADMIN") return router.replace("/admin/profile");
+      if (data.role === "EMPLOYER") return router.replace("/employer/profile");
+      return router.replace("/jobseeker/profile");
     }
 
-    if (data.role === "EMPLOYER") return router.push("/employer/dashboard");
-    if (data.role === "ADMIN") return router.push("/admin/dashboard");
-    return router.push("/");
+    if (data.role === "EMPLOYER") return router.replace("/employer/dashboard");
+    if (data.role === "ADMIN") return router.replace("/admin/dashboard");
+    return router.replace("/jobseeker/jobs");
   };
 
   return (
@@ -151,3 +151,5 @@ export default function Login() {
     </div>
   );
 }
+
+Login.disableLayout = true;

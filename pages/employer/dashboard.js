@@ -438,7 +438,7 @@ export default function EmployerDashboard() {
             </div>
           </div>
 
-          <div className="card">
+          <div className={`card ${showQuestionsEditor ? "" : "questions-collapsed"}`}>
                 <div className="card-head">
                   <h3>Custom Application Questions</h3>
                   <p className="muted small">
@@ -447,6 +447,13 @@ export default function EmployerDashboard() {
                     for flexible prompts like cover letters. Any question you
                     add will be required for applicants.
                   </p>
+                  <button
+                    type="button"
+                    className="btn-soft"
+                    onClick={() => setShowQuestionsEditor((prev) => !prev)}
+                  >
+                    {showQuestionsEditor ? "Hide Questions" : "Edit Questions"}
+                  </button>
                 </div>
             <button type="button" className="btn-soft" disabled={!canPostJob} onClick={() => setJobForm((p) => ({ ...p, applicationFields: [...p.applicationFields, createEmptyApplicationField()] }))}>
               Add Question
